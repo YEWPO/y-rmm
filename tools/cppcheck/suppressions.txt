@@ -1,0 +1,34 @@
+// Cppcheck includes its own system headers so we do not ask it to search for
+// our own (freestanding headers are provided by the compiler, and anything else
+// is provided by the `rmm-lib-libc` target).
+missingIncludeSystem
+
+// Cppcheck reports a lot of false positives for unused functions, as it cannot
+// analyze the SMC call boundary. Short of manually suppressing half of the
+// code-base, there's not much we can do about this.
+unusedFunction
+
+// Because files are analyzed individually, Cppcheck sometimes complains that
+// the `missingIncludeSystem` suppression was useless. It's right, but it's
+// also not particularly helpful.
+unmatchedSuppression
+
+// Ignore Preprocessor Error Directive usage
+preprocessorErrorDirective
+
+// Ignore unusedLabel which triggers false positives for COMPILER_ASSERT_ZERO
+unusedLabel
+
+// Ignore COMPILER_ASSERT error
+misra-config
+
+// Ignore const errors
+constVariablePointer
+constParameterPointer
+constParameter
+
+// Ignore cppcheck checkersReport error
+checkersReport
+
+// Ignore errors in ext folder
+*:*/ext/*

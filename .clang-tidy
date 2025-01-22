@@ -1,0 +1,46 @@
+#
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: Copyright TF-RMM Contributors.
+#
+
+#
+# Configuration file for clang-tidy.
+#
+# Checks are specified as a comma-separated list. A '-' before the name of the
+# check will disable that check.
+#
+Checks: '-*,
+    bugprone-*,
+    -bugprone-reserved-identifier,
+    -bugprone-easily-swappable-parameters,
+    -bugprone-branch-clone,
+    google-readability-casting,
+    clang-analyzer-*,
+    -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
+    cert-*,
+    -cert-dcl03-c,
+    -cert-dcl37-c,
+    -cert-dcl51-cpp,
+    -cert-msc30-c,
+    -cert-msc50-cpp,
+    -cert-msc32-c,
+    -cert-msc51-cpp,
+    misc-*,
+    -misc-include-cleaner,
+    -misc-no-recursion,
+    -misc-static-assert,
+    performance-*,
+    -performance-no-int-to-ptr'
+
+#
+# The WarningsAsErrors field specifies which checks will have their warnings
+# promoted to errors. These checks are specified in the same way as above.
+#
+WarningsAsErrors: '*'
+
+#
+# The HeaderFilterRegex field specifies which header files clang-tidy will
+# output warnings from. Note that this does NOT affect which *.c files are
+# checked.
+#
+HeaderFilterRegex: 'drivers/|plat/|runtime/|lib/'
