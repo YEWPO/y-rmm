@@ -110,6 +110,7 @@ target_sources(rmm-runtime
             "rsi/host_call.c"
             "rsi/logger.c"
             "rsi/memory.c"
+            "rsi/plane.c"
             "rsi/psci.c"
             "rsi/realm_ipa_helper.c"
             "rsi/realm_attest.c"

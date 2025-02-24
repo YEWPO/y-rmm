@@ -415,6 +415,7 @@ static bool handle_realm_rsi(struct rec *rec, struct rmi_rec_exit *rec_exit)
 	case SMC64_PSCI_FID_MIN ... SMC64_PSCI_FID_MAX:
 		handle_psci(rec, rec_exit, &res);
 		break;
+  /* RSI Version 1.0 */
 	case SMC_RSI_VERSION:
 		handle_rsi_version(rec, &res);
 		break;
@@ -445,6 +446,10 @@ static bool handle_realm_rsi(struct rec *rec, struct rmi_rec_exit *rec_exit)
 	case SMC_RSI_HOST_CALL:
 		handle_rsi_host_call(rec, rec_exit, &res);
 		break;
+  /* RSI Version 1.1 */
+  case SMC_RSI_PLANE_ENTER:
+    handle_rsi_plane_enter(rec, &res);
+    break;
 	default:
 		res.action = UPDATE_REC_RETURN_TO_REALM;
 		res.smc_res.x[0] = SMC_UNKNOWN;

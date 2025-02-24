@@ -78,6 +78,7 @@ struct rsi_result {
 	struct smc_result smc_res;
 };
 
+/* RSI Version 1.0 */
 void handle_rsi_version(struct rec *rec, struct rsi_result *res);
 void handle_rsi_features(struct rec *rec, struct rsi_result *res);
 void handle_rsi_realm_config(struct rec *rec, struct rsi_result *res);
@@ -94,5 +95,7 @@ void handle_rsi_attest_token_continue(struct rec *rec,
 				      struct rsi_result *res);
 void handle_psci(struct rec *rec, struct rmi_rec_exit *rec_exit,
 		 struct rsi_result *res);
+/* RSI Version 1.1 */
+void handle_rsi_plane_enter(struct rec *rec, struct rsi_result *res);
 
 #endif /* RSI_HANDLER_H */
