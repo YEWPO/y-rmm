@@ -444,6 +444,8 @@ unsigned long smc_realm_create(unsigned long rd_addr,
 
 	rd->num_rec_aux = MAX_REC_AUX_GRANULES;
 
+  rd->num_aux_planes = p.num_aux_planes;
+
 	rd->simd_cfg.sve_en = EXTRACT(RMI_REALM_FLAGS_SVE, p.flags) != 0UL;
 	if (rd->simd_cfg.sve_en) {
 		rd->simd_cfg.sve_vq = (uint32_t)p.sve_vl;

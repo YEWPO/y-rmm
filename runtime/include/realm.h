@@ -62,6 +62,9 @@ struct rd {
 
 	/* Realm Personalization Value */
 	unsigned char rpv[RPV_SIZE];
+
+  /* Number of auxiliary Planes */
+  unsigned int num_aux_planes;
 };
 COMPILER_ASSERT((U(offsetof(struct rd, measurement)) & 7U) == 0U);
 COMPILER_ASSERT(sizeof(struct rd) <= GRANULE_SIZE);

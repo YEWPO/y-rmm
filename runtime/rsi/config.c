@@ -56,9 +56,6 @@ void handle_rsi_realm_config(struct rec *rec, struct rsi_result *res)
 	} else {
 		config->algorithm = RSI_HASH_SHA_512;
 	}
-  config->num_aux_planes = 0; /* TODO */
-  config->gicv3_vtr = 0; /* TODO */
-  config->ats_plane = 0; /* TODO */
 
 	/* Map rd granule */
 	rd = buffer_granule_map(rec->realm_info.g_rd, SLOT_RD);
@@ -66,6 +63,13 @@ void handle_rsi_realm_config(struct rec *rec, struct rsi_result *res)
 
 	/* Populate Realm Personalization Value */
 	(void)memcpy(config->rpv, rd->rpv, RSI_RPV_SIZE);
+
+  /* Populate the number of auxiliary planes */
+  config->num_aux_planes = rd->num_aux_planes;
+
+  /**
+   * TODO: Populate the gicv3_vtr and ats_plane fields in the config
+   */
 
 	/* Unmap rd granule */
 	buffer_unmap(rd);
