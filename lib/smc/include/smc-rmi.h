@@ -213,6 +213,9 @@
 #define RMI_PMU_OVERFLOW_NOT_ACTIVE	U(0)
 #define RMI_PMU_OVERFLOW_ACTIVE		U(1)
 
+/* Max number of Auxiliary Planes */
+#define RMI_MAX_AUX_PLANES    U(3)
+
 /*
  * RmiResponse enumeration represents whether the Host accepted
  * or rejected a Realm request
@@ -655,19 +658,32 @@ struct rmi_realm_params {
 	/* Requested number of PMU counters */
 	SET_MEMBER_RMI(unsigned int pmu_num_ctrs, 0x28, 0x30);	/* 0x28 */
 	/* Measurement algorithm */
-	SET_MEMBER_RMI(unsigned char algorithm, 0x30, 0x400);	/* 0x30 */
+	SET_MEMBER_RMI(unsigned char algorithm, 0x30, 0x38);	/* 0x30 */
+  /* Number of auxiliary Planes */
+  SET_MEMBER_RMI(unsigned long num_aux_planes, 0x38, 0x400); /* 0x38 */
+
 	/* Realm Personalization Value */
-	SET_MEMBER_RMI(unsigned char rpv[RPV_SIZE], 0x400, 0x800); /* 0x400 */
-	SET_MEMBER_RMI(struct {
-			/* Virtual Machine Identifier */
-			unsigned short vmid;			/* 0x800 */
-			/* Realm Translation Table base */
-			unsigned long rtt_base;			/* 0x808 */
-			/* RTT starting level */
-			long rtt_level_start;			/* 0x810 */
-			/* Number of starting level RTTs */
-			unsigned int rtt_num_start;		/* 0x818 */
-		   }, 0x800, 0x1000);
+	SET_MEMBER_RMI(unsigned char rpv[RPV_SIZE], 0x400, 0x440); /* 0x400 */
+  /* If ATS is enabled, determines the stage 2  translation used by devices assigned to the Realm */
+  SET_MEMBER_RMI(unsigned long ats_plane, 0x440, 0x800); /* 0x440 */
+
+  /* Primary Virtual Machine Identifier */
+  SET_MEMBER_RMI(unsigned short vmid, 0x800, 0x808); /* 0x800 */
+  /* Base address of primary RTT */
+  SET_MEMBER_RMI(unsigned long rtt_base, 0x808, 0x810); /* 0x808 */
+  /* RTT starting level */
+  SET_MEMBER_RMI(long rtt_level_start, 0x810, 0x818); /* 0x810 */
+  /* Number of starting level RTTs */
+  SET_MEMBER_RMI(unsigned int rtt_num_start, 0x818, 0x820); /* 0x818 */
+  /* Flags */
+  SET_MEMBER_RMI(unsigned long flags1, 0x820, 0x828); /* 0x820 */
+  /* MECID */
+  SET_MEMBER_RMI(unsigned long mecid, 0x828, 0xf00); /* 0x828 */
+
+  /* Auxiliary Virtual Machine Identifier */
+  SET_MEMBER_RMI(unsigned short aux_vmid[RMI_MAX_AUX_PLANES], 0xf00, 0xf80); /* 0xf00 */
+  /* Base address of auxiliary RTTs */
+  SET_MEMBER_RMI(unsigned long aux_rtt_base[RMI_MAX_AUX_PLANES], 0xf80, 0x1000); /* 0xf80 */
 };
 
 /*
