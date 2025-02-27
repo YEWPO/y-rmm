@@ -315,9 +315,16 @@
 /* RsiRealmConfig structure containing realm configuration */
 struct rsi_realm_config {
 	/* IPA width in bits */
-	SET_MEMBER_RSI(unsigned long ipa_width, 0, 8);		/* Offset 0 */
+	SET_MEMBER_RSI(unsigned long ipa_width, 0x0, 0x8);		/* Offset 0 */
 	/* Hash algorithm */
-	SET_MEMBER_RSI(unsigned char algorithm, 8, 0x200);	/* Offset 8 */
+	SET_MEMBER_RSI(unsigned char algorithm, 0x8, 0x10);	/* Offset 8 */
+  /* Number of auxiliary Planes */
+  SET_MEMBER_RSI(unsigned long num_aux_planes, 0x10, 0x18); /* Offset 0x10 */
+  /* GICv3 VGIC Type Register value */
+  SET_MEMBER_RSI(unsigned long gicv3_vtr, 0x18, 0x20); /* Offset 0x18 */
+  /* If ATS is enabled, determines the stage 2 translation used by devices assigned to the Realm */
+  SET_MEMBER_RSI(unsigned long ats_plane, 0x20, 0x200); /* Offset 0x20 */
+
 	/* Realm Personalization Value */
 	SET_MEMBER_RSI(unsigned char rpv[RSI_RPV_SIZE], 0x200, 0x1000); /* Offset 0x200 */
 };
