@@ -242,6 +242,10 @@
 
 /*
  * FID: 0xC40001A3
+ *
+ * arg1: The number of the auxiliary plane to enter
+ * arg2: IPA of the Granule where PlaneRun is
+ * ret0: Status / error
  */
 #define SMC_RSI_PLANE_ENTER		SMC64_RSI_FID(U(0x13))
 
