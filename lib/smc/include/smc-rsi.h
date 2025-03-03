@@ -89,6 +89,12 @@
 #define RSI_ACCEPT		U(0)
 #define RSI_REJECT		U(1)
 
+/* The number of GPRs (starting from X0) per voluntary exit context */
+#define PLANE_EXIT_NR_GPRS  U(31)
+
+/* Maximum number of Interrupt Controller List Registers */
+#define PLANE_GIC_NUM_LRS    U(16)
+
 /*
  * FID: 0xC4000190
  *
@@ -402,6 +408,63 @@ struct rsi_host_call {
 #define RSI_RDEV_STATE_STOPPING			U(6)
 #define RSI_RDEV_STATE_STOPPED			U(7)
 #define RSI_RDEV_STATE_ERROR			U(8)
+
+struct rsi_plane_enter {
+  /* Flags */
+  SET_MEMBER_RSI(unsigned long flags, 0, 0x8); /* Offset 0 */
+  /* Program counter */
+  SET_MEMBER_RSI(unsigned long pc, 0x8, 0x100); /* Offset 0x8 */
+
+  /* Registers */
+  SET_MEMBER_RSI(unsigned long gprs[PLANE_EXIT_NR_GPRS], 0x100, 0x200); /* Offset 0x10 */
+
+  /* GICv3 Hypervisor Control Register value */
+  SET_MEMBER_RSI(unsigned long gicv3_hcr, 0x200, 0x208); /* Offset 0x200 */
+  /* GICv3 List Registers values */
+  SET_MEMBER_RSI(unsigned long gicv3_lrs[PLANE_GIC_NUM_LRS], 0x208, 0x800); /* Offset 0x208 */
+};
+
+struct rsi_plane_exit {
+  /* Exit reason */
+  SET_MEMBER_RSI(unsigned long exit_reason, 0, 0x100); /* Offset 0 */
+
+  /* Exception Link Register */
+  SET_MEMBER_RSI(unsigned long elr_el2, 0x100, 0x108); /* Offset 0x100 */
+  /* Exception Syndrome Register */
+  SET_MEMBER_RSI(unsigned long esr_el2, 0x108, 0x110); /* Offset 0x108 */
+  /* Fault Address Register */
+  SET_MEMBER_RSI(unsigned long far_el2, 0x110, 0x118); /* Offset 0x110 */
+  /* Hypervisor IPA Fault Address register */
+  SET_MEMBER_RSI(unsigned long hpfar_el2, 0x118, 0x200); /* Offset 0x118 */
+
+  /* Registers */
+  SET_MEMBER_RSI(unsigned long gprs[PLANE_EXIT_NR_GPRS], 0x200, 0x300); /* Offset 0x200 */
+
+  /* GICv3 Hypervisor Control Register value */
+  SET_MEMBER_RSI(unsigned long gicv3_hcr, 0x300, 0x308); /* Offset 0x300 */
+  /* GICv3 List Registers values */
+  SET_MEMBER_RSI(unsigned long gicv3_lrs[PLANE_GIC_NUM_LRS], 0x308, 0x388); /* Offset 0x308 */
+  /* GICv3 Maintenance Interrupt State Register value */
+  SET_MEMBER_RSI(unsigned long gicv3_misr, 0x388, 0x390); /* Offset 0x388 */
+  /* GICv3 Virtual Machine Control Register value */
+  SET_MEMBER_RSI(unsigned long gicv3_vmcr, 0x390, 0x400); /* Offset 0x390 */
+
+  /* Counter-timer Physical Timer Control Register value */
+  SET_MEMBER_RSI(unsigned long cntp_ctl, 0x400, 0x408); /* Offset 0x400 */
+  /* Counter-timer Physical Timer CompareValue Register value */
+  SET_MEMBER_RSI(unsigned long cntp_cval, 0x408, 0x410); /* Offset 0x408 */
+  /* Counter-timer Virtual Timer Control Register value */
+  SET_MEMBER_RSI(unsigned long cntv_ctl, 0x410, 0x418); /* Offset 0x410 */
+  /* Counter-timer Virtual Timer CompareValue Register value */
+  SET_MEMBER_RSI(unsigned long cntv_cval, 0x418, 0x800); /* Offset 0x418 */
+};
+
+struct rsi_plane_run {
+  /* Plane entry information */
+  SET_MEMBER_RSI(struct rsi_plane_enter enter, 0, 0x800); /* Offset 0 */
+  /* Plane exit information */
+  SET_MEMBER_RSI(struct rsi_plane_exit exit, 0x800, 0x1000); /* Offset 0x800 */
+};
 
 /*
  * RsiDeviceInfo
