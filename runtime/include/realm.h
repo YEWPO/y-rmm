@@ -10,6 +10,7 @@
 #include <measurement.h>
 #include <memory.h>
 #include <rec.h>
+#include <plane.h>
 #include <s2tt.h>
 
 #define REALM_NEW		0U
@@ -65,6 +66,8 @@ struct rd {
 
   /* Number of auxiliary Planes */
   unsigned int num_aux_planes;
+
+  STRUCT_TYPE sysreg_state sysregs[MAX_AUX_PLANES];
 };
 COMPILER_ASSERT((U(offsetof(struct rd, measurement)) & 7U) == 0U);
 COMPILER_ASSERT(sizeof(struct rd) <= GRANULE_SIZE);
