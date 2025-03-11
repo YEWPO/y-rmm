@@ -1,10 +1,19 @@
 #include <debug.h>
 #include <buffer.h>
 #include <realm.h>
+#include <plane.h>
 #include <granule.h>
 #include <rec.h>
 #include <rsi-handler.h>
 #include <smc-rsi.h>
+#include <stdbool.h>
+
+static bool aux_plane_state = false;
+
+bool is_aux_plane(void)
+{
+  return aux_plane_state;
+}
 
 static void load_aux_sysregs(struct rec *rec, STRUCT_TYPE sysreg_state *sysregs)
 {
@@ -113,6 +122,7 @@ void handle_rsi_plane_enter(struct rec *rec, struct rsi_result *res)
 
   /* Switch to aux plane */
   load_aux_state(rec, &run->enter, &rd->sysregs[PLANE_TO_ARRAY(plane_index)]);
+  aux_plane_state = true;
 
   /* Unmap rd granule and PlaneRun granule */
   buffer_unmap(rd);
