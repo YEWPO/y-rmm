@@ -90,6 +90,14 @@
 	do {				\
 	} while (true)
 
+#define panic_if(cond, msg, ...) \
+  do {                        \
+    if (cond) {             \
+      ERROR(msg, ##__VA_ARGS__); \
+      panic();            \
+    }                       \
+  } while (false)
+
 __attribute__((__format__(__printf__, 1, 2)))
 static inline void rmm_log(const char *fmt, ...)
 {

@@ -413,6 +413,15 @@ struct rsi_host_call {
 #define RSI_RDEV_STATE_STOPPED			U(7)
 #define RSI_RDEV_STATE_ERROR			U(8)
 
+/*
+ * RsiExitReason
+ * This enumeration represents the reason for a plane exit.
+ * Width: 64 bits.
+ */
+#define RSI_EXIT_SYNC       U(0)
+#define RSI_EXIT_IRQ        U(1)
+#define RSI_EXIT_HOST       U(2)
+
 struct rsi_plane_enter {
   /* Flags */
   SET_MEMBER_RSI(unsigned long flags, 0, 0x8); /* Offset 0 */

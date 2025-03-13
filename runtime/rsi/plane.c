@@ -3,20 +3,28 @@
 #include <realm.h>
 #include <plane.h>
 #include <granule.h>
-#include <rec.h>
 #include <rsi-handler.h>
 #include <smc-rsi.h>
 #include <stdbool.h>
 
-static bool aux_plane_state = false;
+static struct p0_state p0_states[MAX_RECS];
 
-bool is_aux_plane(void)
+bool is_aux_plane(struct rec *rec)
 {
-  return aux_plane_state;
+  unsigned long rec_idx;
+  struct p0_state *p0_state;
+
+  rec_idx = rec->rec_idx;
+  panic_if(rec_idx >= MAX_RECS, "REC index out of range");
+  p0_state = &p0_states[rec_idx];
+
+  return (p0_state->current_plane_index != 0);
 }
 
-static void load_aux_sysregs(struct rec *rec, STRUCT_TYPE sysreg_state *sysregs)
+static void load_sysregs(struct rec *rec, STRUCT_TYPE sysreg_state *sysregs)
 {
+  INFO("[Plane]\tLoading sysregs, rec = 0x%p, sysregs = 0x%p\n", rec, sysregs);
+
   rec->sysregs.sp_el0 = sysregs->sp_el0;
   rec->sysregs.sp_el1 = sysregs->sp_el1;
   rec->sysregs.elr_el1 = sysregs->elr_el1;
@@ -57,22 +65,173 @@ static void load_aux_sysregs(struct rec *rec, STRUCT_TYPE sysreg_state *sysregs)
   rec->sysregs.cntv_cval_el0 = sysregs->cntv_cval_el0;
 }
 
+static void save_sysregs(STRUCT_TYPE sysreg_state *sysregs)
+{
+  INFO("[Plane]\tSaving sysregs, sysregs = 0x%p\n", sysregs);
+
+  sysregs->sp_el0 = read_sp_el0();
+  sysregs->sp_el1 = read_sp_el1();
+  sysregs->elr_el1 = read_elr_el12();
+  sysregs->spsr_el1 = read_spsr_el12();
+  sysregs->pmcr_el0 = read_pmcr_el0();
+  sysregs->tpidrro_el0 = read_tpidrro_el0();
+  sysregs->tpidr_el0 = read_tpidr_el0();
+  sysregs->csselr_el1 = read_csselr_el1();
+  sysregs->sctlr_el1 = read_sctlr_el12();
+  sysregs->sctlr2_el1 = read_sctlr2_el12_if_present();
+  sysregs->actlr_el1 = read_actlr_el1();
+  sysregs->cpacr_el1 = read_cpacr_el12();
+  sysregs->ttbr0_el1 = read_ttbr0_el12();
+  sysregs->ttbr1_el1 = read_ttbr1_el12();
+  sysregs->tcr_el1 = read_tcr_el12();
+  sysregs->esr_el1 = read_esr_el12();
+  sysregs->afsr0_el1 = read_afsr0_el12();
+  sysregs->afsr1_el1 = read_afsr1_el12();
+  sysregs->far_el1 = read_far_el12();
+  sysregs->mair_el1 = read_mair_el12();
+  sysregs->vbar_el1 = read_vbar_el12();
+
+  sysregs->contextidr_el1 = read_contextidr_el12();
+  sysregs->tpidr_el1 = read_tpidr_el1();
+  sysregs->amair_el1 = read_amair_el12();
+  sysregs->cntkctl_el1 = read_cntkctl_el12();
+  sysregs->par_el1 = read_par_el1();
+  sysregs->mdscr_el1 = read_mdscr_el1();
+  sysregs->mdccint_el1 = read_mdccint_el1();
+  sysregs->disr_el1 = read_disr_el1();
+  MPAM(sysregs->mpam0_el1 = read_mpam0_el1();)
+
+  sysregs->cntpoff_el2 = read_cntpoff_el2();
+  sysregs->cntvoff_el2 = read_cntvoff_el2();
+  sysregs->cntp_ctl_el0 = read_cntp_ctl_el02();
+  sysregs->cntp_cval_el0 = read_cntp_cval_el02();
+  sysregs->cntv_ctl_el0 = read_cntv_ctl_el02();
+  sysregs->cntv_cval_el0 = read_cntv_cval_el02();
+}
+
 static void load_aux_state(struct rec *rec, struct rsi_plane_enter *enter, STRUCT_TYPE sysreg_state *sysregs)
 {
-  INFO("Loading aux state\n");
+  INFO("[Plane]\tLoading aux state, rec = 0x%p, enter = 0x%p\n", rec, enter);
 
-  load_aux_sysregs(rec, sysregs);
+  /* Load sysregs from realm descriptor */
+  load_sysregs(rec, sysregs);
 
+  /* Load common states from plane run enter */
   rec->pc = enter->pc;
-
   for (int i = 0; i < PLANE_EXIT_NR_GPRS; i++) {
     rec->regs[i] = enter->gprs[i];
   }
 }
 
+static void save_aux_state(struct rec *rec, struct rsi_plane_exit *exit, STRUCT_TYPE sysreg_state *sysregs)
+{
+  INFO("[Plane]\tSaving aux state, rec = 0x%p, exit = 0x%p\n", rec, exit);
+
+  /* Save sysregs to realm descriptor */
+  save_sysregs(sysregs);
+
+  /* Save common states to plane run exit */
+  for (int i = 0; i < PLANE_EXIT_NR_GPRS; i++) {
+    exit->gprs[i] = rec->regs[i];
+  }
+
+  /* Save exception info to plane run exit */
+  exit->elr_el2 = read_elr_el2();
+  exit->esr_el2 = read_esr_el2();
+  exit->far_el2 = read_far_el2();
+  exit->hpfar_el2 = read_hpfar_el2();
+
+  /*
+   * TODO: GIC and Timer States
+   */
+}
+
+static void load_p0_state(struct rec *rec)
+{
+  INFO("[Plane]\tLoading P0 state, rec = 0x%p\n", rec);
+
+  unsigned long rec_idx;
+  struct p0_state *p0_state;
+
+  rec_idx = rec->rec_idx;
+  panic_if(rec_idx >= MAX_RECS, "REC index out of range");
+  p0_state = &p0_states[rec_idx];
+
+  /* Load P0's common state */
+  rec->pc = p0_state->pc;
+  for (int i = 0; i < PLANE_EXIT_NR_GPRS; i++) {
+    rec->regs[i] = p0_state->gprs[i];
+  }
+
+  /* Clear Pn's related info */
+  p0_state->current_plane_index = 0;
+  p0_state->plane_run_pa = 0;
+
+  /* Load P0's sysregs */
+  load_sysregs(rec, &p0_state->sysregs);
+}
+
+static void save_p0_state(struct rec *rec, unsigned long plane_index, unsigned long plane_run_pa)
+{
+  INFO("[Plane]\tSaving P0 state, rec = 0x%p, plane_index = %lu, plane_run_pa = 0x%lx\n", rec, plane_index, plane_run_pa);
+
+  unsigned long rec_idx;
+  struct p0_state *p0_state;
+
+  rec_idx = rec->rec_idx;
+  panic_if(rec_idx >= MAX_RECS, "REC index out of range");
+  p0_state = &p0_states[rec_idx];
+
+  /* Save P0's common state */
+  p0_state->pc = rec->pc + 4; /* PC + 4 ? */
+  for (int i = 0; i < PLANE_EXIT_NR_GPRS; i++) {
+    p0_state->gprs[i] = rec->regs[i];
+  }
+
+  /* Save Pn's related info */
+  p0_state->current_plane_index = plane_index;
+  p0_state->plane_run_pa = plane_run_pa;
+
+  /* Save P0's sysregs */
+  save_sysregs(&p0_state->sysregs);
+}
+
+void exit_aux_plane(struct rec *rec, unsigned long exit_reason)
+{
+  INFO("[Plane]\tExiting aux plane, rec = 0x%p\n", rec);
+
+  unsigned long rec_idx;
+  struct p0_state *p0_state;
+  unsigned long aux_plane_index;
+  unsigned long plane_run_pa;
+  struct rd *rd;
+  struct rsi_plane_run *run;
+
+  rec_idx = rec->rec_idx;
+  panic_if(rec_idx >= MAX_RECS, "REC index out of range");
+  p0_state = &p0_states[rec_idx];
+
+  aux_plane_index = p0_state->current_plane_index;
+  panic_if(aux_plane_index == 0, "Not in aux plane");
+  plane_run_pa = p0_state->plane_run_pa;
+  panic_if(plane_run_pa == 0, "Invalid plane run PA");
+  run = (struct rsi_plane_run *)buffer_granule_map(find_granule(plane_run_pa), SLOT_RSI_CALL);
+
+  rd = buffer_granule_map(rec->realm_info.g_rd, SLOT_RD);
+
+  /* Switch back to P0 */
+  run->exit.exit_reason = exit_reason;
+  save_aux_state(rec, &run->exit, &rd->sysregs[PLANE_TO_ARRAY(aux_plane_index)]);
+  load_p0_state(rec);
+
+  /* Unmap rd granule and PlaneRun granule */
+  buffer_unmap(rd);
+  buffer_unmap(run);
+}
+
 void handle_rsi_plane_enter(struct rec *rec, struct rsi_result *res)
 {
-  unsigned int plane_index = rec->regs[1];
+  unsigned long plane_index = rec->regs[1];
   unsigned long ipa = rec->regs[2];
 
   enum s2_walk_status walk_status;
@@ -121,8 +280,8 @@ void handle_rsi_plane_enter(struct rec *rec, struct rsi_result *res)
   assert(run != NULL);
 
   /* Switch to aux plane */
+  save_p0_state(rec, plane_index, walk_res.pa);
   load_aux_state(rec, &run->enter, &rd->sysregs[PLANE_TO_ARRAY(plane_index)]);
-  aux_plane_state = true;
 
   /* Unmap rd granule and PlaneRun granule */
   buffer_unmap(rd);
