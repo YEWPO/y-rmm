@@ -121,6 +121,13 @@ static void load_aux_state(struct rec *rec, struct rsi_plane_enter *enter, STRUC
   for (int i = 0; i < PLANE_EXIT_NR_GPRS; i++) {
     rec->regs[i] = enter->gprs[i];
   }
+
+  /* Load GIC info from plane run enter */
+  if ((enter->flags & RSI_ENTER_GIC_OWNER) == 0) {
+    sysregs->gicstate.ich_hcr_el2 = enter->gicv3_hcr;
+    memcpy(sysregs->gicstate.ich_lr_el2, enter->gicv3_lrs, sizeof(enter->gicv3_lrs));
+  }
+  gic_restore_state(&sysregs->gicstate);
 }
 
 static void save_aux_state(struct rec *rec, struct rsi_plane_exit *exit, STRUCT_TYPE sysreg_state *sysregs)
@@ -141,9 +148,12 @@ static void save_aux_state(struct rec *rec, struct rsi_plane_exit *exit, STRUCT_
   exit->far_el2 = read_far_el2();
   exit->hpfar_el2 = read_hpfar_el2();
 
-  /*
-   * TODO: GIC and Timer States
-   */
+  /* Report Pn's GIC info */
+  gic_save_state(&sysregs->gicstate);
+  exit->gicv3_hcr = sysregs->gicstate.ich_hcr_el2;
+  memcpy(exit->gicv3_lrs, sysregs->gicstate.ich_lr_el2, sizeof(exit->gicv3_lrs));
+  exit->gicv3_misr = sysregs->gicstate.ich_misr_el2;
+  exit->gicv3_vmcr = sysregs->gicstate.ich_vmcr_el2;
 }
 
 static void load_p0_state(struct rec *rec)
@@ -223,6 +233,7 @@ void exit_aux_plane(struct rec *rec, unsigned long exit_reason)
   run->exit.exit_reason = exit_reason;
   save_aux_state(rec, &run->exit, &rd->sysregs[PLANE_TO_ARRAY(aux_plane_index)]);
   load_p0_state(rec);
+  rec->gic_owner = 0;
 
   /* Unmap rd granule and PlaneRun granule */
   buffer_unmap(rd);
@@ -282,6 +293,9 @@ void handle_rsi_plane_enter(struct rec *rec, struct rsi_result *res)
   /* Switch to aux plane */
   save_p0_state(rec, plane_index, walk_res.pa);
   load_aux_state(rec, &run->enter, &rd->sysregs[PLANE_TO_ARRAY(plane_index)]);
+  if ((run->enter.flags & RSI_ENTER_GIC_OWNER) != 0) {
+    rec->gic_owner = plane_index;
+  }
 
   /* Unmap rd granule and PlaneRun granule */
   buffer_unmap(rd);
