@@ -32,6 +32,8 @@ static void init_aux_plane_sysregs(struct rd *rd)
     rd->sysregs[i].mdscr_el1 = MDSCR_EL1_TDCC_BIT;
     rd->sysregs[i].cnthctl_el2 = CNTHCTL_EL2_NO_TRAPS;
     rd->sysregs[i].cptr_el2 = CPTR_EL2_VHE_INIT;
+
+    gic_cpu_state_init(&rd->sysregs[i].gicstate);
   }
 }
 

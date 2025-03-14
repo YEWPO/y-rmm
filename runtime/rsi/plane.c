@@ -154,6 +154,7 @@ static void save_aux_state(struct rec *rec, struct rsi_plane_exit *exit, STRUCT_
   memcpy(exit->gicv3_lrs, sysregs->gicstate.ich_lr_el2, sizeof(exit->gicv3_lrs));
   exit->gicv3_misr = sysregs->gicstate.ich_misr_el2;
   exit->gicv3_vmcr = sysregs->gicstate.ich_vmcr_el2;
+  write_ich_hcr_el2(sysregs->gicstate.ich_hcr_el2 | ICH_HCR_EL2_EN_BIT); /* (Issue: gic_save_state) */
 }
 
 static void load_p0_state(struct rec *rec)
