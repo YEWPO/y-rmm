@@ -422,6 +422,16 @@ struct rsi_host_call {
 #define RSI_EXIT_IRQ        U(1)
 #define RSI_EXIT_HOST       U(2)
 
+/*
+ * RsiPlaneEnterFlags
+ * This enumeration represents the flags for a plane enter.
+ * Width: 64 bits.
+ */
+#define RSI_ENTER_TRAP_WFI          U(1<<0)
+#define RSI_ENTER_TRAP_WFE          U(1<<1)
+#define RSI_ENTER_TRAP_HC           U(1<<2)
+#define RSI_ENTER_GIC_OWNER         U(1<<3)
+
 struct rsi_plane_enter {
   /* Flags */
   SET_MEMBER_RSI(unsigned long flags, 0, 0x8); /* Offset 0 */

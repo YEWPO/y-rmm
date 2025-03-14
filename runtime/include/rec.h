@@ -239,6 +239,7 @@ struct rec {
 
 	unsigned long pc;
 	unsigned long pstate;
+  unsigned long gic_owner;
 
 	STRUCT_TYPE sysreg_state sysregs;
 	STRUCT_TYPE common_sysreg_state common_sysregs;
