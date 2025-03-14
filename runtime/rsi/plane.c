@@ -258,8 +258,8 @@ void check_plane_exit(struct rec *rec)
   p0_state = &p0_states[rec_idx];
 
   if (p0_state->current_plane_index != 0
-      || rec->gic_owner != p0_state->current_plane_index
-      || rec->sysregs.gicstate.ich_misr_el2 != 0) {
+      && rec->gic_owner != p0_state->current_plane_index
+      && rec->sysregs.gicstate.ich_misr_el2 != 0) {
     INFO("[Plane]\tREC %lu is in aux plane %lu, GIC owner %lu, GIC MISR 0x%lx\n",
          rec_idx, p0_state->current_plane_index, rec->gic_owner, rec->sysregs.gicstate.ich_misr_el2);
     exit_aux_plane(rec, RSI_EXIT_IRQ);
