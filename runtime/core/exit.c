@@ -468,7 +468,7 @@ static bool handle_realm_rsi(struct rec *rec, struct rmi_rec_exit *rec_exit)
 
 	if (((unsigned int)res.action & FLAG_STAGE_2_ABORT) != 0U) {
 		emulate_stage2_data_abort(rec, rec_exit, res.rtt_level);
-	} else {
+	} else if (function_id != SMC_RSI_PLANE_ENTER) {
 		advance_pc();
 	}
 

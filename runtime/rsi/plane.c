@@ -21,48 +21,48 @@ bool is_aux_plane(struct rec *rec)
   return (p0_state->current_plane_index != 0);
 }
 
-static void load_sysregs(struct rec *rec, STRUCT_TYPE sysreg_state *sysregs)
+static void load_sysregs(STRUCT_TYPE sysreg_state *sysregs)
 {
-  INFO("[Plane]\tLoading sysregs, rec = 0x%p, sysregs = 0x%p\n", rec, sysregs);
+  INFO("[Plane]\tLoading sysregs, sysregs = 0x%p\n", sysregs);
 
-  rec->sysregs.sp_el0 = sysregs->sp_el0;
-  rec->sysregs.sp_el1 = sysregs->sp_el1;
-  rec->sysregs.elr_el1 = sysregs->elr_el1;
-  rec->sysregs.spsr_el1 = sysregs->spsr_el1;
-  rec->sysregs.pmcr_el0 = sysregs->pmcr_el0;
-  rec->sysregs.tpidrro_el0 = sysregs->tpidrro_el0;
-  rec->sysregs.tpidr_el0 = sysregs->tpidr_el0;
-  rec->sysregs.csselr_el1 = sysregs->csselr_el1;
-  rec->sysregs.sctlr_el1 = sysregs->sctlr_el1;
-  rec->sysregs.sctlr2_el1 = sysregs->sctlr2_el1;
-  rec->sysregs.actlr_el1 = sysregs->actlr_el1;
-  rec->sysregs.cpacr_el1 = sysregs->cpacr_el1;
-  rec->sysregs.ttbr0_el1 = sysregs->ttbr0_el1;
-  rec->sysregs.ttbr1_el1 = sysregs->ttbr1_el1;
-  rec->sysregs.tcr_el1 = sysregs->tcr_el1;
-  rec->sysregs.esr_el1 = sysregs->esr_el1;
-  rec->sysregs.afsr0_el1 = sysregs->afsr0_el1;
-  rec->sysregs.afsr1_el1 = sysregs->afsr1_el1;
-  rec->sysregs.far_el1 = sysregs->far_el1;
-  rec->sysregs.mair_el1 = sysregs->mair_el1;
-  rec->sysregs.vbar_el1 = sysregs->vbar_el1;
+  write_sp_el0(sysregs->sp_el0);
+  write_sp_el1(sysregs->sp_el1);
+  write_elr_el12(sysregs->elr_el1);
+  write_spsr_el12(sysregs->spsr_el1);
+  write_pmcr_el0(sysregs->pmcr_el0);
+  write_tpidrro_el0(sysregs->tpidrro_el0);
+  write_tpidr_el0(sysregs->tpidr_el0);
+  write_csselr_el1(sysregs->csselr_el1);
+  write_sctlr_el12(sysregs->sctlr_el1);
+  write_sctlr2_el12_if_present(sysregs->sctlr2_el1);
+  write_actlr_el1(sysregs->actlr_el1);
+  write_cpacr_el12(sysregs->cpacr_el1);
+  write_ttbr0_el12(sysregs->ttbr0_el1);
+  write_ttbr1_el12(sysregs->ttbr1_el1);
+  write_tcr_el12(sysregs->tcr_el1);
+  write_esr_el12(sysregs->esr_el1);
+  write_afsr0_el12(sysregs->afsr0_el1);
+  write_afsr1_el12(sysregs->afsr1_el1);
+  write_far_el12(sysregs->far_el1);
+  write_mair_el12(sysregs->mair_el1);
+  write_vbar_el12(sysregs->vbar_el1);
 
-  rec->sysregs.contextidr_el1 = sysregs->contextidr_el1;
-  rec->sysregs.tpidr_el1 = sysregs->tpidr_el1;
-  rec->sysregs.amair_el1 = sysregs->amair_el1;
-  rec->sysregs.cntkctl_el1 = sysregs->cntkctl_el1;
-  rec->sysregs.par_el1 = sysregs->par_el1;
-  rec->sysregs.mdscr_el1 = sysregs->mdscr_el1;
-  rec->sysregs.mdccint_el1 = sysregs->mdccint_el1;
-  rec->sysregs.disr_el1 = sysregs->disr_el1;
-  MPAM(rec->sysregs.mpam0_el1 = sysregs->mpam0_el1;)
+  write_contextidr_el12(sysregs->contextidr_el1);
+  write_tpidr_el1(sysregs->tpidr_el1);
+  write_amair_el12(sysregs->amair_el1);
+  write_cntkctl_el12(sysregs->cntkctl_el1);
+  write_par_el1(sysregs->par_el1);
+  write_mdscr_el1(sysregs->mdscr_el1);
+  write_mdccint_el1(sysregs->mdccint_el1);
+  write_disr_el1(sysregs->disr_el1);
+  MPAM(write_mpam0_el1(sysregs->mpam0_el1);)
 
-  rec->sysregs.cntpoff_el2 = sysregs->cntpoff_el2;
-  rec->sysregs.cntvoff_el2 = sysregs->cntvoff_el2;
-  rec->sysregs.cntp_ctl_el0 = sysregs->cntp_ctl_el0;
-  rec->sysregs.cntp_cval_el0 = sysregs->cntp_cval_el0;
-  rec->sysregs.cntv_ctl_el0 = sysregs->cntv_ctl_el0;
-  rec->sysregs.cntv_cval_el0 = sysregs->cntv_cval_el0;
+  write_cntpoff_el2(sysregs->cntpoff_el2);
+  write_cntvoff_el2(sysregs->cntvoff_el2);
+  write_cntp_ctl_el02(sysregs->cntp_ctl_el0);
+  write_cntp_cval_el02(sysregs->cntp_cval_el0);
+  write_cntv_ctl_el02(sysregs->cntv_ctl_el0);
+  write_cntv_cval_el02(sysregs->cntv_cval_el0);
 }
 
 static void save_sysregs(STRUCT_TYPE sysreg_state *sysregs)
@@ -114,10 +114,10 @@ static void load_aux_state(struct rec *rec, struct rsi_plane_enter *enter, STRUC
   INFO("[Plane]\tLoading aux state, rec = 0x%p, enter = 0x%p\n", rec, enter);
 
   /* Load sysregs from realm descriptor */
-  load_sysregs(rec, sysregs);
+  load_sysregs(sysregs);
 
   /* Load common states from plane run enter */
-  rec->pc = enter->pc;
+  write_elr_el2(enter->pc);
   for (int i = 0; i < PLANE_EXIT_NR_GPRS; i++) {
     rec->regs[i] = enter->gprs[i];
   }
@@ -158,7 +158,7 @@ static void load_p0_state(struct rec *rec)
   p0_state = &p0_states[rec_idx];
 
   /* Load P0's common state */
-  rec->pc = p0_state->pc;
+  write_elr_el2(p0_state->pc);
   for (int i = 0; i < PLANE_EXIT_NR_GPRS; i++) {
     rec->regs[i] = p0_state->gprs[i];
   }
@@ -168,7 +168,7 @@ static void load_p0_state(struct rec *rec)
   p0_state->plane_run_pa = 0;
 
   /* Load P0's sysregs */
-  load_sysregs(rec, &p0_state->sysregs);
+  load_sysregs(&p0_state->sysregs);
 }
 
 static void save_p0_state(struct rec *rec, unsigned long plane_index, unsigned long plane_run_pa)
@@ -183,7 +183,7 @@ static void save_p0_state(struct rec *rec, unsigned long plane_index, unsigned l
   p0_state = &p0_states[rec_idx];
 
   /* Save P0's common state */
-  p0_state->pc = rec->pc + 4; /* PC + 4 ? */
+  p0_state->pc = read_elr_el2() + 4UL;
   for (int i = 0; i < PLANE_EXIT_NR_GPRS; i++) {
     p0_state->gprs[i] = rec->regs[i];
   }
