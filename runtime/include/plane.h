@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <rec.h>
+#include <timers.h>
 
 /* Undetermined */
 #define MAX_RECS              4U
@@ -26,5 +27,6 @@ bool is_aux_plane(struct rec *rec);
 void exit_aux_plane(struct rec *rec, unsigned long exit_reason);
 void check_plane_exit(struct rec *rec);
 struct gic_cpu_state *get_gic_owner_gic_state(struct rec *rec);
+void report_plane_timer_state(struct rec *rec, struct timer_state *timer_state);
 
 #endif

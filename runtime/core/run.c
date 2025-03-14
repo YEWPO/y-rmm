@@ -353,7 +353,9 @@ void rec_run_loop(struct rec *rec, struct rmi_rec_exit *rec_exit)
 	/* Clear active simd_context */
 	rec->active_simd_ctx = NULL;
 
-	report_timer_state_to_ns(rec_exit);
+  struct timer_state timer_state;
+  report_plane_timer_state(rec, &timer_state);
+	report_timer_state_to_ns(rec_exit, &timer_state);
 
 	save_realm_state(rec, rec_exit);
 	restore_ns_state(rec);

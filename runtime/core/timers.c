@@ -83,12 +83,10 @@ bool check_pending_timers(struct rec *rec)
 		 TIMER_ASSERTED(rec->sysregs.cntp_ctl_el0));
 }
 
-void report_timer_state_to_ns(struct rmi_rec_exit *rec_exit)
+void report_timer_state_to_ns(struct rmi_rec_exit *rec_exit, struct timer_state *timer_state)
 {
-	/* Expose Realm EL1 timer state */
-	rec_exit->cntv_ctl = read_cntv_ctl_el02();
-	rec_exit->cntv_cval = read_cntv_cval_el02() - read_cntvoff_el2();
-
-	rec_exit->cntp_ctl = read_cntp_ctl_el02();
-	rec_exit->cntp_cval = read_cntp_cval_el02() - read_cntpoff_el2();
+  rec_exit->cntp_ctl = timer_state->cntp_ctl;
+  rec_exit->cntp_cval = timer_state->cntp_cval;
+  rec_exit->cntv_ctl = timer_state->cntv_ctl;
+  rec_exit->cntv_cval = timer_state->cntv_cval;
 }

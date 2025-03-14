@@ -1,3 +1,4 @@
+#include <arch_helpers.h>
 #include <debug.h>
 #include <buffer.h>
 #include <realm.h>
@@ -274,6 +275,64 @@ struct gic_cpu_state *get_gic_owner_gic_state(struct rec *rec)
   }
 
   return &rec->sysregs.gicstate;
+}
+
+void report_plane_timer_state(struct rec *rec, struct timer_state *timer_state)
+{
+  unsigned long rec_idx;
+  struct p0_state *p0_state;
+
+  rec_idx = rec->rec_idx;
+  panic_if(rec_idx >= MAX_RECS, "REC index out of range");
+  p0_state = &p0_states[rec_idx];
+
+  /* REC Exit from P0 */
+  if (p0_state->current_plane_index == 0) {
+    timer_state->cntv_ctl = read_cntv_ctl_el02();
+    timer_state->cntv_cval = read_cntv_cval_el02() - read_cntvoff_el2();
+    timer_state->cntp_ctl = read_cntp_ctl_el02();
+    timer_state->cntp_cval = read_cntp_cval_el02() - read_cntpoff_el2();
+    return;
+  }
+
+  /* REC Exit from Pn */
+  unsigned long p0_cntv_ctl, p0_cntv_cval, p0_cntp_ctl, p0_cntp_cval;
+  unsigned long pn_cntv_ctl, pn_cntv_cval, pn_cntp_ctl, pn_cntp_cval;
+  bool p0_cntv_active, p0_cntp_active, pn_cntv_active, pn_cntp_active;
+
+  p0_cntp_ctl = p0_state->sysregs.cntp_ctl_el0;
+  p0_cntp_cval = p0_state->sysregs.cntp_cval_el0 - p0_state->sysregs.cntpoff_el2;
+  p0_cntv_ctl = p0_state->sysregs.cntv_ctl_el0;
+  p0_cntv_cval = p0_state->sysregs.cntv_cval_el0 - p0_state->sysregs.cntvoff_el2;
+  pn_cntp_ctl = read_cntp_ctl_el02();
+  pn_cntp_cval = read_cntp_cval_el02() - read_cntpoff_el2();
+  pn_cntv_ctl = read_cntv_ctl_el02();
+  pn_cntv_cval = read_cntv_cval_el02() - read_cntvoff_el2();
+
+#define TIMER_ACTIVE(ctl) (((ctl) & (CNTx_CTL_ENABLE | CNTx_CTL_IMASK)) == CNTx_CTL_ENABLE)
+
+  p0_cntv_active = TIMER_ACTIVE(p0_cntv_ctl);
+  p0_cntp_active = TIMER_ACTIVE(p0_cntp_ctl);
+  pn_cntv_active = TIMER_ACTIVE(pn_cntv_ctl);
+  pn_cntp_active = TIMER_ACTIVE(pn_cntp_ctl);
+
+  if ((pn_cntv_active && !p0_cntv_active)
+      || (pn_cntv_active && p0_cntv_active && (pn_cntv_cval < p0_cntv_cval))) {
+    timer_state->cntv_ctl = pn_cntv_ctl;
+    timer_state->cntv_cval = pn_cntv_cval;
+  } else {
+    timer_state->cntv_ctl = p0_cntv_ctl;
+    timer_state->cntv_cval = p0_cntv_cval;
+  }
+
+  if ((pn_cntp_active && !p0_cntp_active)
+      || (pn_cntp_active && p0_cntp_active && (pn_cntp_cval < p0_cntp_cval))) {
+    timer_state->cntp_ctl = pn_cntp_ctl;
+    timer_state->cntp_cval = pn_cntp_cval;
+  } else {
+    timer_state->cntp_ctl = p0_cntp_ctl;
+    timer_state->cntp_cval = p0_cntp_cval;
+  }
 }
 
 void handle_rsi_plane_enter(struct rec *rec, struct rsi_result *res)
