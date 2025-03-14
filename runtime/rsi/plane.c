@@ -259,6 +259,23 @@ void check_plane_exit(struct rec *rec)
   }
 }
 
+struct gic_cpu_state *get_gic_owner_gic_state(struct rec *rec)
+{
+  unsigned long rec_idx;
+  struct p0_state *p0_state;
+
+  rec_idx = rec->rec_idx;
+  panic_if(rec_idx >= MAX_RECS, "REC index out of range");
+  p0_state = &p0_states[rec_idx];
+
+  panic_if(p0_state->current_plane_index == 0 && rec->gic_owner != 0, "Invalid GIC owner");
+  if ((p0_state->current_plane_index ^ rec->gic_owner) != 0) {
+    return &p0_state->sysregs.gicstate;
+  }
+
+  return &rec->sysregs.gicstate;
+}
+
 void handle_rsi_plane_enter(struct rec *rec, struct rsi_result *res)
 {
   unsigned long plane_index = rec->regs[1];
