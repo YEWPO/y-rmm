@@ -156,6 +156,12 @@ static void save_aux_state(struct rec *rec, struct rsi_plane_exit *exit, STRUCT_
   exit->gicv3_misr = sysregs->gicstate.ich_misr_el2;
   exit->gicv3_vmcr = sysregs->gicstate.ich_vmcr_el2;
   write_ich_hcr_el2(sysregs->gicstate.ich_hcr_el2 | ICH_HCR_EL2_EN_BIT); /* (Issue: gic_save_state) */
+
+  /* Report Pn's timer state */
+  exit->cntp_ctl = sysregs->cntp_ctl_el0;
+  exit->cntp_cval = sysregs->cntp_cval_el0;
+  exit->cntv_ctl = sysregs->cntv_ctl_el0;
+  exit->cntv_cval = sysregs->cntv_cval_el0;
 }
 
 static void load_p0_state(struct rec *rec)
