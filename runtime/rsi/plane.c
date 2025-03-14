@@ -123,7 +123,7 @@ static void load_aux_state(struct rec *rec, struct rsi_plane_enter *enter, STRUC
   }
 
   /* Load GIC info from plane run enter */
-  if ((enter->flags & RSI_ENTER_GIC_OWNER) == 0) {
+  if ((enter->flags & PLANE_ENTER_FLAG_GIC_OWNER) != 0) {
     sysregs->gicstate.ich_hcr_el2 = enter->gicv3_hcr;
     memcpy(sysregs->gicstate.ich_lr_el2, enter->gicv3_lrs, sizeof(enter->gicv3_lrs));
   }
@@ -312,7 +312,7 @@ void handle_rsi_plane_enter(struct rec *rec, struct rsi_result *res)
   /* Switch to aux plane */
   save_p0_state(rec, plane_index, walk_res.pa);
   load_aux_state(rec, &run->enter, &rd->sysregs[PLANE_TO_ARRAY(plane_index)]);
-  if ((run->enter.flags & RSI_ENTER_GIC_OWNER) != 0) {
+  if ((run->enter.flags & PLANE_ENTER_FLAG_GIC_OWNER) != 0) {
     rec->gic_owner = plane_index;
   }
 
