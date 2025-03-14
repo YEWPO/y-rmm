@@ -12,6 +12,7 @@
 #include <debug.h>
 #include <exit.h>
 #include <granule.h>
+#include <plane.h>
 #include <pmu.h>
 #include <rec.h>
 #include <run.h>
@@ -281,6 +282,7 @@ void rec_run_loop(struct rec *rec, struct rmi_rec_exit *rec_exit)
 
 	save_ns_state(rec);
 	restore_realm_state(rec);
+  check_plane_exit(rec);
 
 	/*
 	 * The run loop must be entered with active SIMD context set to current

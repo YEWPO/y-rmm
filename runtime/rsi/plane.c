@@ -241,6 +241,24 @@ void exit_aux_plane(struct rec *rec, unsigned long exit_reason)
   buffer_unmap(run);
 }
 
+void check_plane_exit(struct rec *rec)
+{
+  unsigned long rec_idx;
+  struct p0_state *p0_state;
+
+  rec_idx = rec->rec_idx;
+  panic_if(rec_idx >= MAX_RECS, "REC index out of range");
+  p0_state = &p0_states[rec_idx];
+
+  if (p0_state->current_plane_index != 0
+      || rec->gic_owner != p0_state->current_plane_index
+      || rec->sysregs.gicstate.ich_misr_el2 != 0) {
+    INFO("[Plane]\tREC %lu is in aux plane %lu, GIC owner %lu, GIC MISR 0x%lx\n",
+         rec_idx, p0_state->current_plane_index, rec->gic_owner, rec->sysregs.gicstate.ich_misr_el2);
+    exit_aux_plane(rec, RSI_EXIT_IRQ);
+  }
+}
+
 void handle_rsi_plane_enter(struct rec *rec, struct rsi_result *res)
 {
   unsigned long plane_index = rec->regs[1];
