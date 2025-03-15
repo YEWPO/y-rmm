@@ -250,6 +250,8 @@ void exit_aux_plane(struct rec *rec, unsigned long exit_reason)
 
 void check_plane_exit(struct rec *rec)
 {
+  INFO("[Plane]\tChecking plane exit, rec = 0x%p\n", rec);
+
   unsigned long rec_idx;
   struct p0_state *p0_state;
 
@@ -263,11 +265,16 @@ void check_plane_exit(struct rec *rec)
     INFO("[Plane]\tREC %lu is in aux plane %lu, GIC owner %lu, GIC MISR 0x%lx\n",
          rec_idx, p0_state->current_plane_index, rec->gic_owner, rec->sysregs.gicstate.ich_misr_el2);
     exit_aux_plane(rec, RSI_EXIT_IRQ);
+    INFO("[Plane]\tExit from aux plane\n");
   }
+
+  INFO("[Plane]\tKeep running in current plane\n");
 }
 
 struct gic_cpu_state *get_gic_owner_gic_state(struct rec *rec)
 {
+  INFO("[Plane]\tGetting GIC owner GIC state, rec = 0x%p\n", rec);
+
   unsigned long rec_idx;
   struct p0_state *p0_state;
 
@@ -285,6 +292,8 @@ struct gic_cpu_state *get_gic_owner_gic_state(struct rec *rec)
 
 void report_plane_timer_state(struct rec *rec, struct timer_state *timer_state)
 {
+  INFO("[Plane]\tReporting plane timer state, rec = 0x%p\n", rec);
+
   unsigned long rec_idx;
   struct p0_state *p0_state;
 
@@ -324,18 +333,22 @@ void report_plane_timer_state(struct rec *rec, struct timer_state *timer_state)
 
   if ((pn_cntv_active && !p0_cntv_active)
       || (pn_cntv_active && p0_cntv_active && (pn_cntv_cval < p0_cntv_cval))) {
+    INFO("[Plane]\tReport Pn's CNTV\n");
     timer_state->cntv_ctl = pn_cntv_ctl;
     timer_state->cntv_cval = pn_cntv_cval;
   } else {
+    INFO("[Plane]\tReport P0's CNTV\n");
     timer_state->cntv_ctl = p0_cntv_ctl;
     timer_state->cntv_cval = p0_cntv_cval;
   }
 
   if ((pn_cntp_active && !p0_cntp_active)
       || (pn_cntp_active && p0_cntp_active && (pn_cntp_cval < p0_cntp_cval))) {
+    INFO("[Plane]\tReport Pn's CNTP\n");
     timer_state->cntp_ctl = pn_cntp_ctl;
     timer_state->cntp_cval = pn_cntp_cval;
   } else {
+    INFO("[Plane]\tReport P0's CNTP\n");
     timer_state->cntp_ctl = p0_cntp_ctl;
     timer_state->cntp_cval = p0_cntp_cval;
   }
