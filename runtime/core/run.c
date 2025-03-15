@@ -282,7 +282,9 @@ void rec_run_loop(struct rec *rec, struct rmi_rec_exit *rec_exit)
 
 	save_ns_state(rec);
 	restore_realm_state(rec);
-  check_plane_exit(rec);
+  if (is_aux_plane(rec)) {
+    check_plane_exit(rec);
+  }
 
 	/*
 	 * The run loop must be entered with active SIMD context set to current

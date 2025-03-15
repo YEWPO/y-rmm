@@ -259,8 +259,9 @@ void check_plane_exit(struct rec *rec)
   panic_if(rec_idx >= MAX_RECS, "REC index out of range");
   p0_state = &p0_states[rec_idx];
 
-  if (p0_state->current_plane_index != 0
-      && rec->gic_owner != p0_state->current_plane_index
+  panic_if(p0_state->current_plane_index == 0, "Not in aux plane");
+
+  if (rec->gic_owner != p0_state->current_plane_index
       && rec->sysregs.gicstate.ich_misr_el2 != 0) {
     INFO("[Plane]\tREC %lu is in aux plane %lu, GIC owner %lu, GIC MISR 0x%lx\n",
          rec_idx, p0_state->current_plane_index, rec->gic_owner, rec->sysregs.gicstate.ich_misr_el2);
@@ -273,8 +274,6 @@ void check_plane_exit(struct rec *rec)
 
 struct gic_cpu_state *get_gic_owner_gic_state(struct rec *rec)
 {
-  INFO("[Plane]\tGetting GIC owner GIC state, rec = 0x%p\n", rec);
-
   unsigned long rec_idx;
   struct p0_state *p0_state;
 
@@ -292,8 +291,6 @@ struct gic_cpu_state *get_gic_owner_gic_state(struct rec *rec)
 
 void report_plane_timer_state(struct rec *rec, struct timer_state *timer_state)
 {
-  INFO("[Plane]\tReporting plane timer state, rec = 0x%p\n", rec);
-
   unsigned long rec_idx;
   struct p0_state *p0_state;
 
@@ -309,6 +306,8 @@ void report_plane_timer_state(struct rec *rec, struct timer_state *timer_state)
     timer_state->cntp_cval = read_cntp_cval_el02() - read_cntpoff_el2();
     return;
   }
+
+  INFO("[Plane]\tReporting plane timer state, rec = 0x%p\n", rec);
 
   /* REC Exit from Pn */
   unsigned long p0_cntv_ctl, p0_cntv_cval, p0_cntp_ctl, p0_cntp_cval;

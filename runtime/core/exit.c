@@ -604,7 +604,7 @@ static bool handle_exception_irq_lel(struct rec *rec, struct rmi_rec_exit *rec_e
 bool handle_realm_exit(struct rec *rec, struct rmi_rec_exit *rec_exit, int exception)
 {
   if (is_aux_plane(rec)) {
-    INFO("[Plane]\tGet Exception %d from Pn\t", exception);
+    INFO("[Plane]\tGet Exception %d from Pn\n", exception);
   }
 
 	switch (exception) {
