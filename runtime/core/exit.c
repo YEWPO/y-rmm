@@ -605,6 +605,7 @@ bool handle_realm_exit(struct rec *rec, struct rmi_rec_exit *rec_exit, int excep
 {
   if (is_aux_plane(rec)) {
     INFO("[Plane]\tGet Exception %d from Pn\n", exception);
+    return handle_aux_plane_exit(rec, rec_exit, exception);
   }
 
 	switch (exception) {

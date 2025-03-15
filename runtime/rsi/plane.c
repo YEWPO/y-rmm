@@ -353,6 +353,36 @@ void report_plane_timer_state(struct rec *rec, struct timer_state *timer_state)
   }
 }
 
+bool handle_aux_plane_exit(struct rec *rec, struct rmi_rec_exit *rec_exit, unsigned long exit_reason)
+{
+  unsigned long rec_idx;
+  struct p0_state *p0_state;
+
+  rec_idx = rec->rec_idx;
+  panic_if(rec_idx >= MAX_RECS, "REC index out of range");
+  p0_state = &p0_states[rec_idx];
+
+  panic_if(p0_state->current_plane_index == 0, "Not in aux plane");
+
+  switch (exit_reason) {
+    case ARM_EXCEPTION_SYNC_LEL:
+      exit_aux_plane(rec, RSI_EXIT_SYNC);
+      return true;
+    case ARM_EXCEPTION_IRQ_LEL:
+      rec_exit->exit_reason = RMI_EXIT_IRQ;
+      return false;
+    case ARM_EXCEPTION_FIQ_LEL:
+      rec_exit->exit_reason = RMI_EXIT_FIQ;
+      return false;
+    case ARM_EXCEPTION_SERROR_LEL:
+      INFO("[Plane]\tHandle SError from Pn\n");
+      panic();
+    default:
+      INFO("[Plane]\tUnrecognized exit reason: %lu\n", exit_reason);
+      panic();
+  }
+}
+
 void handle_rsi_plane_enter(struct rec *rec, struct rsi_result *res)
 {
   unsigned long plane_index = rec->regs[1];
