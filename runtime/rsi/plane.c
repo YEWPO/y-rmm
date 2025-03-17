@@ -7,6 +7,7 @@
 #include <rsi-handler.h>
 #include <smc-rsi.h>
 #include <stdbool.h>
+#include <exit.h>
 
 static struct p0_state p0_states[MAX_RECS];
 
@@ -214,7 +215,7 @@ static void save_p0_state(struct rec *rec, unsigned long plane_index, unsigned l
   save_sysregs(&p0_state->sysregs);
 }
 
-void exit_aux_plane(struct rec *rec, unsigned long exit_reason)
+static void exit_aux_plane(struct rec *rec, unsigned long exit_reason)
 {
   INFO("[Plane]\tExiting aux plane, rec = 0x%p\n", rec);
 
@@ -353,6 +354,58 @@ void report_plane_timer_state(struct rec *rec, struct timer_state *timer_state)
   }
 }
 
+static bool handle_aux_plane_sync_exception(struct rec *rec, struct rmi_rec_exit *rec_exit)
+{
+  unsigned long esr = read_esr_el2();
+  unsigned long esr_ec = esr & MASK(ESR_EL2_EC);
+
+  if (esr_ec == ESR_EL2_EC_SMC) {
+    /*
+     * TODO: Check whether it is a host_call
+     */
+  }
+
+  if (esr_ec == ESR_EL2_EC_DATA_ABORT || esr_ec == ESR_EL2_EC_INST_ABORT) {
+    if (handle_sync_external_abort(rec, rec_exit, esr)) {
+      INFO("[Plane]\tHandled SEA\n");
+      return false;
+    }
+
+    unsigned long far = read_far_el2();
+    unsigned long hpfar = read_hpfar_el2();
+
+    /* Check IPA */
+    unsigned long fipa = (hpfar & MASK(HPFAR_EL2_FIPA)) << HPFAR_EL2_FIPA_OFFSET;
+
+    /* Walk IPA */
+    struct s2_walk_result walk_res;
+    enum s2_walk_status walk_status;
+
+    walk_status = realm_ipa_to_pa(rec, fipa, &walk_res);
+
+    panic_if(walk_status == WALK_INVALID_PARAMS, "handle aux plane sync exception should not reach here");
+
+    if (walk_status == WALK_SUCCESS) {
+      granule_unlock(walk_res.llt);
+    }
+
+    if (walk_res.ripas_val == RIPAS_DESTROYED) {
+      rec_exit->exit_reason = RMI_EXIT_SYNC;
+      rec_exit->esr = esr & ESR_NONEMULATED_ABORT_MASK;
+      rec_exit->far = far;
+      rec_exit->hpfar = hpfar;
+      return false;
+    }
+
+    /*
+     * TODO: HIPAS is UNASSIGNED and RIPAS is not EMPTY
+     */
+  }
+
+  exit_aux_plane(rec, RSI_EXIT_SYNC);
+  return true;
+}
+
 bool handle_aux_plane_exit(struct rec *rec, struct rmi_rec_exit *rec_exit, unsigned long exit_reason)
 {
   unsigned long rec_idx;
@@ -366,8 +419,7 @@ bool handle_aux_plane_exit(struct rec *rec, struct rmi_rec_exit *rec_exit, unsig
 
   switch (exit_reason) {
     case ARM_EXCEPTION_SYNC_LEL:
-      exit_aux_plane(rec, RSI_EXIT_SYNC);
-      return true;
+      return handle_aux_plane_sync_exception(rec, rec_exit);
     case ARM_EXCEPTION_IRQ_LEL:
       rec_exit->exit_reason = RMI_EXIT_IRQ;
       return false;
@@ -375,8 +427,8 @@ bool handle_aux_plane_exit(struct rec *rec, struct rmi_rec_exit *rec_exit, unsig
       rec_exit->exit_reason = RMI_EXIT_FIQ;
       return false;
     case ARM_EXCEPTION_SERROR_LEL:
-      INFO("[Plane]\tHandle SError from Pn\n");
-      panic();
+      rec_exit->exit_reason = RMI_EXIT_SERROR;
+      return false;
     default:
       INFO("[Plane]\tUnrecognized exit reason: %lu\n", exit_reason);
       panic();

@@ -118,13 +118,15 @@ static bool fsc_is_external_abort(unsigned long fsc)
  * Returns 'true' if the exception is the external abort and the `rec_exit`
  * structure is populated, 'false' otherwise.
  */
-static bool handle_sync_external_abort(struct rec *rec,
+bool handle_sync_external_abort(struct rec *rec,
 				       struct rmi_rec_exit *rec_exit,
 				       unsigned long esr)
 {
 	unsigned long fsc = esr & MASK(ESR_EL2_ABORT_FSC);
 	unsigned long set = esr & MASK(ESR_EL2_ABORT_SET);
 	(void)rec;
+
+  INFO("[Plane]\tfsc = %lx, set = %lx\n", fsc, set);
 
 	if (!fsc_is_external_abort(fsc)) {
 		return false;
