@@ -59,8 +59,6 @@ static void load_sysregs(STRUCT_TYPE sysreg_state *sysregs)
   write_disr_el1(sysregs->disr_el1);
   MPAM(write_mpam0_el1(sysregs->mpam0_el1);)
 
-  write_cntpoff_el2(sysregs->cntpoff_el2);
-  write_cntvoff_el2(sysregs->cntvoff_el2);
   write_cntp_ctl_el02(sysregs->cntp_ctl_el0);
   write_cntp_cval_el02(sysregs->cntp_cval_el0);
   write_cntv_ctl_el02(sysregs->cntv_ctl_el0);
@@ -103,8 +101,6 @@ static void save_sysregs(STRUCT_TYPE sysreg_state *sysregs)
   sysregs->disr_el1 = read_disr_el1();
   MPAM(sysregs->mpam0_el1 = read_mpam0_el1();)
 
-  sysregs->cntpoff_el2 = read_cntpoff_el2();
-  sysregs->cntvoff_el2 = read_cntvoff_el2();
   sysregs->cntp_ctl_el0 = read_cntp_ctl_el02();
   sysregs->cntp_cval_el0 = read_cntp_cval_el02();
   sysregs->cntv_ctl_el0 = read_cntv_ctl_el02();
