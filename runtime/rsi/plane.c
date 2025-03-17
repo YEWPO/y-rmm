@@ -1,3 +1,4 @@
+#include <arch.h>
 #include <arch_helpers.h>
 #include <debug.h>
 #include <buffer.h>
@@ -10,6 +11,7 @@
 #include <exit.h>
 
 static struct p0_state p0_states[MAX_RECS];
+static struct pn_state pn_states[MAX_AUX_PLANES][MAX_RECS];
 
 bool is_aux_plane(struct rec *rec)
 {
@@ -107,12 +109,13 @@ static void save_sysregs(STRUCT_TYPE sysreg_state *sysregs)
   sysregs->cntv_cval_el0 = read_cntv_cval_el02();
 }
 
-static void load_aux_state(struct rec *rec, struct rsi_plane_enter *enter, STRUCT_TYPE sysreg_state *sysregs)
+static void load_aux_state(struct rec *rec, struct rsi_plane_enter *enter, struct pn_state *pn_state)
 {
   INFO("[Plane]\tLoading aux state, rec = 0x%p, enter = 0x%p\n", rec, enter);
 
   /* Load sysregs from realm descriptor */
-  load_sysregs(sysregs);
+  load_sysregs(&pn_state->sysregs);
+  write_spsr_el2(pn_state->pstate);
 
   /* Load common states from plane run enter */
   write_elr_el2(enter->pc);
@@ -122,18 +125,19 @@ static void load_aux_state(struct rec *rec, struct rsi_plane_enter *enter, STRUC
 
   /* Load GIC info from plane run enter */
   if ((enter->flags & PLANE_ENTER_FLAG_GIC_OWNER) != 0) {
-    sysregs->gicstate.ich_hcr_el2 = enter->gicv3_hcr;
-    memcpy(sysregs->gicstate.ich_lr_el2, enter->gicv3_lrs, sizeof(enter->gicv3_lrs));
+    pn_state->sysregs.gicstate.ich_hcr_el2 = enter->gicv3_hcr;
+    memcpy(pn_state->sysregs.gicstate.ich_lr_el2, enter->gicv3_lrs, sizeof(enter->gicv3_lrs));
   }
-  gic_restore_state(&sysregs->gicstate);
+  gic_restore_state(&pn_state->sysregs.gicstate);
 }
 
-static void save_aux_state(struct rec *rec, struct rsi_plane_exit *exit, STRUCT_TYPE sysreg_state *sysregs)
+static void save_aux_state(struct rec *rec, struct rsi_plane_exit *exit, struct pn_state *pn_state)
 {
   INFO("[Plane]\tSaving aux state, rec = 0x%p, exit = 0x%p\n", rec, exit);
 
   /* Save sysregs to realm descriptor */
-  save_sysregs(sysregs);
+  save_sysregs(&pn_state->sysregs);
+  pn_state->pstate = read_spsr_el2();
 
   /* Save common states to plane run exit */
   for (int i = 0; i < PLANE_EXIT_NR_GPRS; i++) {
@@ -147,18 +151,18 @@ static void save_aux_state(struct rec *rec, struct rsi_plane_exit *exit, STRUCT_
   exit->hpfar_el2 = read_hpfar_el2();
 
   /* Report Pn's GIC info */
-  gic_save_state(&sysregs->gicstate);
-  exit->gicv3_hcr = sysregs->gicstate.ich_hcr_el2;
-  memcpy(exit->gicv3_lrs, sysregs->gicstate.ich_lr_el2, sizeof(exit->gicv3_lrs));
-  exit->gicv3_misr = sysregs->gicstate.ich_misr_el2;
-  exit->gicv3_vmcr = sysregs->gicstate.ich_vmcr_el2;
-  write_ich_hcr_el2(sysregs->gicstate.ich_hcr_el2 | ICH_HCR_EL2_EN_BIT); /* (Issue: gic_save_state) */
+  gic_save_state(&pn_state->sysregs.gicstate);
+  exit->gicv3_hcr = pn_state->sysregs.gicstate.ich_hcr_el2;
+  memcpy(exit->gicv3_lrs, pn_state->sysregs.gicstate.ich_lr_el2, sizeof(exit->gicv3_lrs));
+  exit->gicv3_misr = pn_state->sysregs.gicstate.ich_misr_el2;
+  exit->gicv3_vmcr = pn_state->sysregs.gicstate.ich_vmcr_el2;
+  write_ich_hcr_el2(pn_state->sysregs.gicstate.ich_hcr_el2 | ICH_HCR_EL2_EN_BIT); /* (Issue: gic_save_state) */
 
   /* Report Pn's timer state */
-  exit->cntp_ctl = sysregs->cntp_ctl_el0;
-  exit->cntp_cval = sysregs->cntp_cval_el0;
-  exit->cntv_ctl = sysregs->cntv_ctl_el0;
-  exit->cntv_cval = sysregs->cntv_cval_el0;
+  exit->cntp_ctl = pn_state->sysregs.cntp_ctl_el0;
+  exit->cntp_cval = pn_state->sysregs.cntp_cval_el0;
+  exit->cntv_ctl = pn_state->sysregs.cntv_ctl_el0;
+  exit->cntv_cval = pn_state->sysregs.cntv_cval_el0;
 }
 
 static void load_p0_state(struct rec *rec)
@@ -174,6 +178,7 @@ static void load_p0_state(struct rec *rec)
 
   /* Load P0's common state */
   write_elr_el2(p0_state->pc);
+  write_spsr_el2(p0_state->pstate);
   for (int i = 0; i < PLANE_EXIT_NR_GPRS; i++) {
     rec->regs[i] = p0_state->gprs[i];
   }
@@ -199,6 +204,7 @@ static void save_p0_state(struct rec *rec, unsigned long plane_index, unsigned l
 
   /* Save P0's common state */
   p0_state->pc = read_elr_el2() + 4UL;
+  p0_state->pstate = read_spsr_el2();
   for (int i = 0; i < PLANE_EXIT_NR_GPRS; i++) {
     p0_state->gprs[i] = rec->regs[i];
   }
@@ -236,7 +242,7 @@ static void exit_aux_plane(struct rec *rec, unsigned long exit_reason)
 
   /* Switch back to P0 */
   run->exit.exit_reason = exit_reason;
-  save_aux_state(rec, &run->exit, &rd->sysregs[PLANE_TO_ARRAY(aux_plane_index)]);
+  save_aux_state(rec, &run->exit, &pn_states[PLANE_TO_ARRAY(aux_plane_index)][rec->rec_idx]);
   load_p0_state(rec);
   rec->gic_owner = 0;
 
@@ -428,6 +434,33 @@ rec_exit:
   return false;
 }
 
+static void init_aux_plane_sysregs(struct sysreg_state *sysregs)
+{
+  sysregs->pmcr_el0 = PMCR_EL0_INIT;
+  sysregs->sctlr_el1 = SCTLR_EL1_FLAGS;
+  sysregs->mdscr_el1 = MDSCR_EL1_TDCC_BIT;
+
+  gic_cpu_state_init(&sysregs->gicstate);
+}
+
+void init_aux_plane_state(unsigned int num_aux_plane)
+{
+  panic_if(num_aux_plane > MAX_AUX_PLANES, "Number of aux planes out of range");
+
+  for (unsigned int i = 0; i < num_aux_plane; i++) {
+    for (unsigned int j = 0; j < MAX_RECS; j++) {
+      pn_states[i][j].pstate = SPSR_EL2_MODE_EL1h
+                                | SPSR_EL2_nRW_AARCH64
+                                | SPSR_EL2_F_BIT
+                                | SPSR_EL2_I_BIT
+                                | SPSR_EL2_A_BIT
+                                | SPSR_EL2_D_BIT;
+
+      init_aux_plane_sysregs(&pn_states[i][j].sysregs);
+    }
+  }
+}
+
 bool handle_aux_plane_exit(struct rec *rec, struct rmi_rec_exit *rec_exit, unsigned long exit_reason)
 {
   unsigned long rec_idx;
@@ -516,7 +549,7 @@ void handle_rsi_plane_enter(struct rec *rec, struct rsi_result *res)
 
   /* Switch to aux plane */
   save_p0_state(rec, plane_index, walk_res.pa);
-  load_aux_state(rec, &run->enter, &rd->sysregs[PLANE_TO_ARRAY(plane_index)]);
+  load_aux_state(rec, &run->enter, &pn_states[PLANE_TO_ARRAY(plane_index)][rec->rec_idx]);
   if ((run->enter.flags & PLANE_ENTER_FLAG_GIC_OWNER) != 0) {
     rec->gic_owner = plane_index;
   }

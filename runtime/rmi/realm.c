@@ -22,19 +22,6 @@
 
 #define RMI_FEATURE_MIN_IPA_SIZE	PARANGE_0000_WIDTH
 
-static void init_aux_plane_sysregs(struct rd *rd)
-{
-  for (unsigned int i = 0; i < rd->num_aux_planes; i++) {
-    rd->sysregs[i].pmcr_el0 = rd->pmu_enabled ?
-          PMCR_EL0_INIT_RESET : PMCR_EL0_INIT;
-
-    rd->sysregs[i].sctlr_el1 = SCTLR_EL1_FLAGS;
-    rd->sysregs[i].mdscr_el1 = MDSCR_EL1_TDCC_BIT;
-
-    gic_cpu_state_init(&rd->sysregs[i].gicstate);
-  }
-}
-
 unsigned long smc_realm_activate(unsigned long rd_addr)
 {
 	struct rd *rd;
@@ -458,7 +445,7 @@ unsigned long smc_realm_create(unsigned long rd_addr,
 	rd->num_rec_aux = MAX_REC_AUX_GRANULES;
 
   rd->num_aux_planes = p.num_aux_planes;
-  init_aux_plane_sysregs(rd);
+  init_aux_plane_state(rd->num_aux_planes);
 
 	rd->simd_cfg.sve_en = EXTRACT(RMI_REALM_FLAGS_SVE, p.flags) != 0UL;
 	if (rd->simd_cfg.sve_en) {
