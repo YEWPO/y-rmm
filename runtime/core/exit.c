@@ -126,8 +126,6 @@ bool handle_sync_external_abort(struct rec *rec,
 	unsigned long set = esr & MASK(ESR_EL2_ABORT_SET);
 	(void)rec;
 
-  INFO("[Plane]\tfsc = %lx, set = %lx\n", fsc, set);
-
 	if (!fsc_is_external_abort(fsc)) {
 		return false;
 	}

@@ -371,39 +371,65 @@ static bool handle_aux_plane_sync_exception(struct rec *rec, struct rmi_rec_exit
       return false;
     }
 
-    unsigned long far = read_far_el2();
     unsigned long hpfar = read_hpfar_el2();
-
-    /* Check IPA */
     unsigned long fipa = (hpfar & MASK(HPFAR_EL2_FIPA)) << HPFAR_EL2_FIPA_OFFSET;
 
-    /* Walk IPA */
+    /* Walk for RIPAS */
     struct s2_walk_result walk_res;
     enum s2_walk_status walk_status;
 
     walk_status = realm_ipa_to_pa(rec, fipa, &walk_res);
-
     panic_if(walk_status == WALK_INVALID_PARAMS, "handle aux plane sync exception should not reach here");
 
     if (walk_status == WALK_SUCCESS) {
       granule_unlock(walk_res.llt);
     }
 
+    /*
+     * Walk for HIPAS
+     */
+    struct s2tt_walk wi;
+    struct s2tt_context *s2_ctx = &rec->realm_info.s2_ctx;
+    unsigned long *ll_table, s2tte;
+
+    granule_lock(s2_ctx->g_rtt, GRANULE_STATE_RTT);
+    s2tt_walk_lock_unlock(s2_ctx, fipa, S2TT_PAGE_LEVEL, &wi);
+
+    ll_table = buffer_granule_map(wi.g_llt, SLOT_RTT);
+    assert(ll_table != NULL);
+
+    s2tte = s2tte_read(&ll_table[wi.index]);
+
+    buffer_unmap(ll_table);
+    granule_unlock(wi.g_llt);
+
+    /*
+     * if RIPAS is DESTROYED, cause REC Exit
+     */
     if (walk_res.ripas_val == RIPAS_DESTROYED) {
-      rec_exit->exit_reason = RMI_EXIT_SYNC;
-      rec_exit->esr = esr & ESR_NONEMULATED_ABORT_MASK;
-      rec_exit->far = far;
-      rec_exit->hpfar = hpfar;
-      return false;
+      goto rec_exit;
     }
 
     /*
-     * TODO: HIPAS is UNASSIGNED and RIPAS is not EMPTY
+     * if HIPAS is UNASSIGNED and RIPAS is not EMPTY, cause REC Exit
      */
+    if (s2tte_is_unassigned(s2_ctx, s2tte) && walk_res.ripas_val != RIPAS_EMPTY) {
+      goto rec_exit;
+    }
   }
 
+  /*
+   * Any other sync exception, cause Plane Exit
+   */
   exit_aux_plane(rec, RSI_EXIT_SYNC);
   return true;
+
+rec_exit:
+  rec_exit->exit_reason = RMI_EXIT_SYNC;
+  rec_exit->esr = esr & ESR_NONEMULATED_ABORT_MASK;
+  rec_exit->far = read_far_el2();
+  rec_exit->hpfar = read_hpfar_el2();
+  return false;
 }
 
 bool handle_aux_plane_exit(struct rec *rec, struct rmi_rec_exit *rec_exit, unsigned long exit_reason)
