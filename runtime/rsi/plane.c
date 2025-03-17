@@ -439,6 +439,13 @@ bool handle_aux_plane_exit(struct rec *rec, struct rmi_rec_exit *rec_exit, unsig
 
   panic_if(p0_state->current_plane_index == 0, "Not in aux plane");
 
+  INFO("[Plane]\tAn exception:\n"
+      "elr = 0x%016lx\n"
+      "esr = 0x%016lx\n"
+      "far = 0x%016lx\n"
+      "hpfar = 0x%016lx\n",
+      read_elr_el2(), read_esr_el2(), read_far_el2(), read_hpfar_el2());
+
   switch (exit_reason) {
     case ARM_EXCEPTION_SYNC_LEL:
       return handle_aux_plane_sync_exception(rec, rec_exit);
