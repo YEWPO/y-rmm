@@ -27,7 +27,7 @@ bool is_aux_plane(struct rec *rec)
 
 static void load_sysregs(STRUCT_TYPE sysreg_state *sysregs)
 {
-  INFO("[Plane]\tLoading sysregs, sysregs = 0x%p\n", sysregs);
+  INFO("[Plane]\tLoading sysregs\n");
 
   write_sp_el0(sysregs->sp_el0);
   write_sp_el1(sysregs->sp_el1);
@@ -69,7 +69,7 @@ static void load_sysregs(STRUCT_TYPE sysreg_state *sysregs)
 
 static void save_sysregs(STRUCT_TYPE sysreg_state *sysregs)
 {
-  INFO("[Plane]\tSaving sysregs, sysregs = 0x%p\n", sysregs);
+  INFO("[Plane]\tSaving sysregs\n");
 
   sysregs->sp_el0 = read_sp_el0();
   sysregs->sp_el1 = read_sp_el1();
@@ -111,13 +111,14 @@ static void save_sysregs(STRUCT_TYPE sysreg_state *sysregs)
 
 static void load_aux_state(struct rec *rec, struct rsi_plane_enter *enter, struct pn_state *pn_state)
 {
-  INFO("[Plane]\tLoading aux state, rec = 0x%p, enter = 0x%p\n", rec, enter);
+  INFO("[Plane]\tLoading aux state\n");
 
   /* Load sysregs from realm descriptor */
   load_sysregs(&pn_state->sysregs);
   write_spsr_el2(pn_state->pstate);
 
   /* Load common states from plane run enter */
+  INFO("[Plane]\tLoading Pn's PC = 0x%016lx\n", enter->pc);
   write_elr_el2(enter->pc);
   for (int i = 0; i < PLANE_EXIT_NR_GPRS; i++) {
     rec->regs[i] = enter->gprs[i];
@@ -133,7 +134,7 @@ static void load_aux_state(struct rec *rec, struct rsi_plane_enter *enter, struc
 
 static void save_aux_state(struct rec *rec, struct rsi_plane_exit *exit, struct pn_state *pn_state)
 {
-  INFO("[Plane]\tSaving aux state, rec = 0x%p, exit = 0x%p\n", rec, exit);
+  INFO("[Plane]\tSaving aux state\n");
 
   /* Save sysregs to realm descriptor */
   save_sysregs(&pn_state->sysregs);
@@ -167,7 +168,7 @@ static void save_aux_state(struct rec *rec, struct rsi_plane_exit *exit, struct 
 
 static void load_p0_state(struct rec *rec)
 {
-  INFO("[Plane]\tLoading P0 state, rec = 0x%p\n", rec);
+  INFO("[Plane]\tLoading P0 state\n");
 
   unsigned long rec_idx;
   struct p0_state *p0_state;
@@ -193,7 +194,7 @@ static void load_p0_state(struct rec *rec)
 
 static void save_p0_state(struct rec *rec, unsigned long plane_index, unsigned long plane_run_pa)
 {
-  INFO("[Plane]\tSaving P0 state, rec = 0x%p, plane_index = %lu, plane_run_pa = 0x%lx\n", rec, plane_index, plane_run_pa);
+  INFO("[Plane]\tSaving P0 state\n");
 
   unsigned long rec_idx;
   struct p0_state *p0_state;
@@ -219,7 +220,7 @@ static void save_p0_state(struct rec *rec, unsigned long plane_index, unsigned l
 
 static void exit_aux_plane(struct rec *rec, unsigned long exit_reason)
 {
-  INFO("[Plane]\tExiting aux plane, rec = 0x%p\n", rec);
+  INFO("[Plane]\tExiting aux plane\n");
 
   unsigned long rec_idx;
   struct p0_state *p0_state;
@@ -253,7 +254,7 @@ static void exit_aux_plane(struct rec *rec, unsigned long exit_reason)
 
 void check_plane_exit(struct rec *rec)
 {
-  INFO("[Plane]\tChecking plane exit, rec = 0x%p\n", rec);
+  INFO("[Plane]\tChecking plane exit\n");
 
   unsigned long rec_idx;
   struct p0_state *p0_state;
@@ -478,6 +479,11 @@ bool handle_aux_plane_exit(struct rec *rec, struct rmi_rec_exit *rec_exit, unsig
       "far = 0x%016lx\n"
       "hpfar = 0x%016lx\n",
       read_elr_el2(), read_esr_el2(), read_far_el2(), read_hpfar_el2());
+  INFO("elr_el1 = 0x%016lx\n"
+      "esr_el1 = 0x%016lx\n"
+      "far_el1 = 0x%016lx\n"
+      "spsr_el1 = 0x%016lx\n",
+      read_elr_el12(), read_esr_el12(), read_far_el12(), read_spsr_el12());
 
   switch (exit_reason) {
     case ARM_EXCEPTION_SYNC_LEL:
