@@ -421,6 +421,7 @@ struct rsi_host_call {
 #define RSI_EXIT_SYNC       U(0)
 #define RSI_EXIT_IRQ        U(1)
 #define RSI_EXIT_HOST       U(2)
+#define RSI_EXIT_UNKNOWN    U(0xff)
 
 /*
  * RsiPlaneEnterFlags
