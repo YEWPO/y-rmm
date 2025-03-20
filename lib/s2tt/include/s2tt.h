@@ -150,6 +150,8 @@ bool s2tte_is_addr_lvl_aligned(const struct s2tt_context *s2_ctx,
 
 enum ripas s2tte_get_ripas(const struct s2tt_context *s2_ctx,
 			   unsigned long s2tte);
+unsigned long s2tte_get_hipas(const struct s2tt_context *s2_ctx,
+            unsigned long s2tte);
 
 /***************************************************************************
  * Helpers for Stage 2 Translation Tables  (S2TT).

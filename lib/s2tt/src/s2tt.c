@@ -829,6 +829,20 @@ enum ripas s2tte_get_ripas(const struct s2tt_context *s2_ctx, unsigned long s2tt
 }
 
 /*
+ * Returns HIPAS of @s2tte.
+ */
+unsigned long s2tte_get_hipas(const struct s2tt_context *s2_ctx, unsigned long s2tte)
+{
+  unsigned long desc_hipas = s2tte & S2TTE_INVALID_HIPAS_MASK;
+
+  (void)s2_ctx;
+
+  desc_hipas >>= S2TTE_INVALID_HIPAS_SHIFT;
+
+  return desc_hipas;
+}
+
+/*
  * Populates @s2tt with unassigned_empty s2ttes.
  *
  * The granule is populated before it is made a table,

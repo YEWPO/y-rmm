@@ -410,16 +410,49 @@ static bool check_rec_exit(struct rec *rec, struct rmi_rec_exit *rec_exit, unsig
     unsigned long esr_ec = esr & MASK(ESR_EL2_EC);
 
     /*
-     * If RIPAS is DESTROY, or HIPAS is UNASSIGNED and RIPAS is not EMPTY,
+     * If RIPAS is DESTROYED, or HIPAS is UNASSIGNED and RIPAS is not EMPTY,
      * cause REC Exit
      */
     if (esr_ec == ESR_EL2_EC_INST_ABORT ||
         esr_ec == ESR_EL2_EC_DATA_ABORT ||
         esr_ec == ESR_EL2_EC_INST_ABORT_SEL ||
         esr_ec == ESR_EL2_EC_DATA_ABORT_SEL) {
-      /*
-       * TODO: Check IPA state
-       */
+      unsigned long hpfar = read_hpfar_el2();
+      unsigned long fipa = (hpfar & MASK(HPFAR_EL2_FIPA)) << HPFAR_EL2_FIPA_OFFSET;
+
+      struct s2tt_context *s2_ctx;
+      struct s2tt_walk wi;
+      unsigned long s2tte, *ll_table;
+
+      s2_ctx = &(rec->realm_info.s2_ctx);
+      granule_lock(s2_ctx->g_rtt, GRANULE_STATE_RTT);
+
+      s2tt_walk_lock_unlock(s2_ctx, fipa, S2TT_PAGE_LEVEL, &wi);
+
+      ll_table = buffer_granule_map(wi.g_llt, SLOT_RTT);
+      s2tte = s2tte_read(&ll_table[wi.index]);
+
+      granule_unlock(wi.g_llt);
+      buffer_unmap(ll_table);
+
+      unsigned long ripas_val;
+      unsigned long hipas_val;
+
+      ripas_val = s2tte_get_ripas(s2_ctx, s2tte);
+      hipas_val = s2tte_get_hipas(s2_ctx, s2tte);
+
+      /* RMM doesn't define HIPAS yet */
+      if (ripas_val == RIPAS_DESTROYED ||
+          (hipas_val == RMI_UNASSIGNED && ripas_val != RIPAS_EMPTY)) {
+        rec_exit->exit_reason = RMI_EXIT_SYNC;
+        rec_exit->esr = esr;
+        rec_exit->far = read_far_el2();
+        rec_exit->hpfar = hpfar;
+        rec->last_run_info.esr = esr;
+        rec->last_run_info.far = read_far_el2();
+
+        return true;
+      }
     }
 
     return false;
