@@ -364,7 +364,7 @@ void report_plane_timer_state(struct rec *rec, struct timer_state *timer_state)
     return;
   }
 
-  INFO("[Plane]\tReporting plane timer state, rec = 0x%p\n", rec);
+  INFO("[Plane]\tReporting plane timer state\n");
 
   /* REC Exit from Pn */
   unsigned long p0_cntv_ctl, p0_cntv_cval, p0_cntp_ctl, p0_cntp_cval;
@@ -568,16 +568,16 @@ static bool check_aux_plane_sync_exception(struct rec *rec, unsigned long exit_r
 bool handle_aux_plane_exit(struct rec *rec, struct rmi_rec_exit *rec_exit, unsigned long exit_reason)
 {
   INFO("[Plane]\tAn exception:\n"
-      "elr_el2 = 0x%016lx\n"
-      "esr_el2 = 0x%016lx\n"
-      "far_el2 = 0x%016lx\n"
-      "hpfar_el2 = 0x%016lx\n"
-      "spsr_el2 = 0x%016lx\n",
+      "elr_el2 =\t0x%016lx\t"
+      "esr_el2 =\t0x%016lx\n"
+      "far_el2 =\t0x%016lx\t"
+      "hpfar_el2 =\t0x%016lx\n"
+      "spsr_el2 =\t0x%016lx\n",
       read_elr_el2(), read_esr_el2(), read_far_el2(), read_hpfar_el2(), read_spsr_el2());
-  INFO("elr_el1 = 0x%016lx\n"
-      "esr_el1 = 0x%016lx\n"
-      "far_el1 = 0x%016lx\n"
-      "spsr_el1 = 0x%016lx\n",
+  INFO("elr_el1 =\t0x%016lx\t"
+      "esr_el1 =\t0x%016lx\n"
+      "far_el1 =\t0x%016lx\t"
+      "spsr_el1 =\t0x%016lx\n",
       read_elr_el12(), read_esr_el12(), read_far_el12(), read_spsr_el12());
 
   if (check_rec_exit(rec, rec_exit, exit_reason)) {
