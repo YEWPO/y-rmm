@@ -14,7 +14,6 @@
 #define ARRAY_TO_PLANE(array) ((array) + 1)
 
 struct pn_state {
-  unsigned long pstate;
   unsigned long flags;
 
   STRUCT_TYPE sysreg_state sysregs;

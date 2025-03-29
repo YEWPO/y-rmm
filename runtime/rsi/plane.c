@@ -52,13 +52,6 @@ void init_aux_plane_state(unsigned int num_aux_plane)
 
   for (unsigned int i = 0; i < num_aux_plane; i++) {
     for (unsigned int j = 0; j < MAX_RECS; j++) {
-      pn_states[i][j].pstate = SPSR_EL2_MODE_EL1h
-                                | SPSR_EL2_nRW_AARCH64
-                                | SPSR_EL2_F_BIT
-                                | SPSR_EL2_I_BIT
-                                | SPSR_EL2_A_BIT
-                                | SPSR_EL2_D_BIT;
-
       init_aux_plane_sysregs(&pn_states[i][j].sysregs);
     }
   }
@@ -167,7 +160,7 @@ static void load_aux_state(struct rec *rec, struct rsi_plane_enter *enter, struc
 
   /* Load sysregs from realm descriptor */
   load_sysregs(&pn_state->sysregs);
-  write_spsr_el2(pn_state->pstate);
+  write_spsr_el2(enter->spsr_el2);
 
   /* Load common states from plane run enter */
   INFO("[Plane]\tLoading Pn's PC = 0x%016lx\n", enter->pc);
@@ -191,7 +184,6 @@ static void save_aux_state(struct rec *rec, struct rsi_plane_exit *exit, struct 
 
   /* Save sysregs to realm descriptor */
   save_sysregs(&pn_state->sysregs);
-  pn_state->pstate = read_spsr_el2();
 
   /* Save common states to plane run exit */
   for (int i = 0; i < PLANE_EXIT_NR_GPRS; i++) {
@@ -203,6 +195,7 @@ static void save_aux_state(struct rec *rec, struct rsi_plane_exit *exit, struct 
   exit->esr_el2 = read_esr_el2();
   exit->far_el2 = read_far_el2();
   exit->hpfar_el2 = read_hpfar_el2();
+  exit->spsr_el2 = read_spsr_el2();
 
   /* Report Pn's GIC info */
   gic_save_state(&pn_state->sysregs.gicstate);
