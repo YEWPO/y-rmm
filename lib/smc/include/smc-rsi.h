@@ -432,6 +432,7 @@ struct rsi_host_call {
 #define PLANE_ENTER_FLAG_TRAP_WFE          U(1<<1)
 #define PLANE_ENTER_FLAG_TRAP_HC           U(1<<2)
 #define PLANE_ENTER_FLAG_GIC_OWNER         U(1<<3)
+#define PLANE_ENTER_FLAG_TRAP_SIMD         U(1<<4)
 
 struct rsi_plane_enter {
   /* Flags */
@@ -445,7 +446,10 @@ struct rsi_plane_enter {
   /* GICv3 Hypervisor Control Register value */
   SET_MEMBER_RSI(unsigned long gicv3_hcr, 0x200, 0x208); /* Offset 0x200 */
   /* GICv3 List Registers values */
-  SET_MEMBER_RSI(unsigned long gicv3_lrs[PLANE_GIC_NUM_LRS], 0x208, 0x800); /* Offset 0x208 */
+  SET_MEMBER_RSI(unsigned long gicv3_lrs[PLANE_GIC_NUM_LRS], 0x208, 0x300); /* Offset 0x208 */
+
+  /* SPSR_EL2 value */
+  SET_MEMBER_RSI(unsigned long spsr_el2, 0x300, 0x800); /* Offset 0x300 */
 };
 
 struct rsi_plane_exit {
@@ -459,7 +463,9 @@ struct rsi_plane_exit {
   /* Fault Address Register */
   SET_MEMBER_RSI(unsigned long far_el2, 0x110, 0x118); /* Offset 0x110 */
   /* Hypervisor IPA Fault Address register */
-  SET_MEMBER_RSI(unsigned long hpfar_el2, 0x118, 0x200); /* Offset 0x118 */
+  SET_MEMBER_RSI(unsigned long hpfar_el2, 0x118, 0x120); /* Offset 0x118 */
+  /* SPSR_EL2 value */
+  SET_MEMBER_RSI(unsigned long spsr_el2, 0x120, 0x200); /* Offset 0x120 */
 
   /* Registers */
   SET_MEMBER_RSI(unsigned long gprs[PLANE_EXIT_NR_GPRS], 0x200, 0x300); /* Offset 0x200 */
