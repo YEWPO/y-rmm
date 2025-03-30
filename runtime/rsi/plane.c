@@ -662,3 +662,32 @@ void handle_rsi_plane_enter(struct rec *rec, struct rsi_result *res)
   /* Write result values */
   res->smc_res.x[0] = RSI_SUCCESS;
 }
+
+void handle_rsi_plane_sysreg_read(struct rec *rec, struct rsi_result *res)
+{
+  unsigned long plane_index = rec->regs[1];
+  unsigned long sysreg = rec->regs[2];
+
+  res->action = UPDATE_REC_RETURN_TO_REALM;
+
+  res->smc_res.x[0] = RSI_SUCCESS;
+  res->smc_res.x[1] = plane_index;
+  res->smc_res.x[2] = sysreg;
+}
+
+void handle_rsi_plane_sysreg_write(struct rec *rec, struct rsi_result *res)
+{
+  unsigned long plane_index = rec->regs[1];
+  unsigned long sysreg = rec->regs[2];
+  unsigned long value_lower = rec->regs[3];
+  unsigned long value_upper = rec->regs[4];
+
+  (void)plane_index;
+  (void)sysreg;
+  (void)value_lower;
+  (void)value_upper;
+
+  res->action = UPDATE_REC_RETURN_TO_REALM;
+
+  res->smc_res.x[0] = RSI_SUCCESS;
+}

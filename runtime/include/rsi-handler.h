@@ -97,5 +97,7 @@ void handle_psci(struct rec *rec, struct rmi_rec_exit *rec_exit,
 		 struct rsi_result *res);
 /* RSI Version 1.1 */
 void handle_rsi_plane_enter(struct rec *rec, struct rsi_result *res);
+void handle_rsi_plane_sysreg_read(struct rec *rec, struct rsi_result *res);
+void handle_rsi_plane_sysreg_write(struct rec *rec, struct rsi_result *res);
 
 #endif /* RSI_HANDLER_H */
