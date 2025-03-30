@@ -698,6 +698,16 @@ void handle_rsi_plane_sysreg_read(struct rec *rec, struct rsi_result *res)
 
   struct rsi_sysreg_val sysreg_val = {0};
 
+  if ((sysreg_addr & RSI_SYSREG_ID_MASK) == RSI_SYSREG_ID) {
+    /*
+     * Handle id_aa64* sysregs read
+     * 64 bits only
+     */
+    sysreg_val.value_lower = plane_sysreg_id_read(rec, sysreg_addr);
+  } else {
+    panic();
+  }
+
   res->action = UPDATE_REC_RETURN_TO_REALM;
 
   /* Unmap buffers */
@@ -731,6 +741,8 @@ void handle_rsi_plane_sysreg_write(struct rec *rec, struct rsi_result *res)
     buffer_unmap(rd);
     return;
   }
+
+  panic();
 
   struct rsi_sysreg_val sysreg_val;
   sysreg_val.value_lower = value_lower;

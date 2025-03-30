@@ -327,3 +327,80 @@ bool rec_sysreg_valid(struct rec *rec, unsigned long sysreg_addr, bool is_write)
 
   return true;
 }
+
+#define RSI_SYSREG_CASE(reg) \
+  case RSI_SYSREG_ID_AA64##reg##_EL1:
+
+unsigned long plane_sysreg_id_read(struct rec *rec, unsigned long sysreg_addr)
+{
+  unsigned long value = 0;
+  unsigned long sysreg = sysreg_addr & RSI_SYSREG_MASK;
+
+	switch (sysreg) {
+	RSI_SYSREG_CASE(AFR0)
+		value = SYSREG_READ(AFR0);
+		break;
+	RSI_SYSREG_CASE(AFR1)
+		value = SYSREG_READ(AFR1);
+		break;
+	RSI_SYSREG_CASE(DFR0)
+		value = SYSREG_READ_CLEAR(DFR0);
+		break;
+	RSI_SYSREG_CASE(DFR1)
+		value = SYSREG_READ_CLEAR(DFR1);
+		break;
+	RSI_SYSREG_CASE(ISAR0)
+		value = SYSREG_READ(ISAR0);
+		break;
+	RSI_SYSREG_CASE(ISAR1)
+		value = SYSREG_READ(ISAR1);
+		break;
+	RSI_SYSREG_CASE(MMFR0)
+		value = SYSREG_READ(MMFR0);
+		break;
+	RSI_SYSREG_CASE(MMFR1)
+		value = SYSREG_READ(MMFR1);
+		break;
+	RSI_SYSREG_CASE(MMFR2)
+		value = SYSREG_READ(MMFR2);
+		break;
+	RSI_SYSREG_CASE(PFR0)
+		/*
+		 * Workaround for TF-A trapping AMU registers access
+		 * to EL3 in Realm state.
+		 */
+		value = SYSREG_READ_CLEAR(PFR0);
+
+		/*
+		 * Clear SVE bits if architecture supports it but SVE is
+		 * disabled for current realm.
+		 */
+		if ((EXTRACT(ID_AA64PFR0_EL1_SVE, value) != 0UL) &&
+		    (rec->realm_info.simd_cfg.sve_en == false)) {
+			value &= ~MASK(ID_AA64PFR0_EL1_SVE);
+		}
+		break;
+	RSI_SYSREG_CASE(PFR1)
+		value = SYSREG_READ_CLEAR(PFR1);
+		break;
+	RSI_SYSREG_CASE(ZFR0)
+		if (is_feat_sve_present() && rec->realm_info.simd_cfg.sve_en) {
+			value = read_id_aa64zfr0_el1();
+		} else {
+			value = 0UL;
+		}
+		break;
+	RSI_SYSREG_CASE(SMFR0)
+		/*
+		 * SME not supported for Realms, clear all fields in SME feature
+		 * register ID_AA64SMFR0_EL1
+		 */
+		value = 0UL;
+		break;
+	default:
+		/* All other encodings are in the RES0 space */
+		value = 0UL;
+	}
+
+  return value;
+}
