@@ -414,6 +414,37 @@ struct rsi_host_call {
 #define RSI_RDEV_STATE_ERROR			U(8)
 
 /*
+ * RsiSysregAddress
+ * Width: 64 bits
+ */
+#define RSI_SYSREG_D128_SHIFT   U(16)
+#define RSI_SYSREG_D128_MASK    (U(0x1) << RSI_SYSREG_D128_SHIFT)
+#define RSI_SYSREG_D128(sysreg_addr) \
+  (((sysreg_addr) & RSI_SYSREG_D128_MASK) >> RSI_SYSREG_D128_SHIFT)
+
+#define RSI_SYSREG_OP0_SHIFT    U(14)
+#define RSI_SYSREG_OP0_MASK     (U(0x3) << RSI_SYSREG_OP0_SHIFT)
+#define RSI_SYSREG_OP1_SHIFT    U(11)
+#define RSI_SYSREG_OP1_MASK     (U(0x7) << RSI_SYSREG_OP1_SHIFT)
+#define RSI_SYSREG_CRN_SHIFT    U(7)
+#define RSI_SYSREG_CRN_MASK     (U(0xf) << RSI_SYSREG_CRN_SHIFT)
+#define RSI_SYSREG_CRM_SHIFT    U(3)
+#define RSI_SYSREG_CRM_MASK     (U(0xf) << RSI_SYSREG_CRM_SHIFT)
+#define RSI_SYSREG_OP2_SHIFT    U(0)
+#define RSI_SYSREG_OP2_MASK     (U(0x7) << RSI_SYSREG_OP2_SHIFT)
+#define RSI_SYSREG_MASK         (RSI_SYSREG_OP0_MASK | \
+                                 RSI_SYSREG_OP1_MASK | \
+                                 RSI_SYSREG_CRN_MASK | \
+                                 RSI_SYSREG_CRM_MASK | \
+                                 RSI_SYSREG_OP2_MASK)
+#define RSI_SYSREG_VAL(op0, op1, crn, crm, op2) \
+  (((op0) << RSI_SYSREG_OP0_SHIFT) | \
+   ((op1) << RSI_SYSREG_OP1_SHIFT) | \
+   ((crn) << RSI_SYSREG_CRN_SHIFT) | \
+   ((crm) << RSI_SYSREG_CRM_SHIFT) | \
+   ((op2) << RSI_SYSREG_OP2_SHIFT))
+
+/*
  * RsiExitReason
  * This enumeration represents the reason for a plane exit.
  * Width: 64 bits.
