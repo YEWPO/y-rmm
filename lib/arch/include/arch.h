@@ -7,7 +7,6 @@
 #define ARCH_H
 
 #include <utils_def.h>
-#include <smc-rsi.h>
 
 /* Cache line size */
 #define CACHE_WRITEBACK_GRANULE	UL(64)

@@ -696,7 +696,7 @@ void handle_rsi_plane_sysreg_read(struct rec *rec, struct rsi_result *res)
     return;
   }
 
-  struct rsi_sysreg_val sysreg_val;
+  struct rsi_sysreg_val sysreg_val = {0};
 
   res->action = UPDATE_REC_RETURN_TO_REALM;
 
@@ -735,6 +735,7 @@ void handle_rsi_plane_sysreg_write(struct rec *rec, struct rsi_result *res)
   struct rsi_sysreg_val sysreg_val;
   sysreg_val.value_lower = value_lower;
   sysreg_val.value_upper = value_upper;
+  (void)sysreg_val;
 
   res->action = UPDATE_REC_RETURN_TO_REALM;
 
