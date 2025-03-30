@@ -9,6 +9,7 @@
 #include <smc-rsi.h>
 #include <stdbool.h>
 #include <exit.h>
+#include <sysreg_traps.h>
 
 /*********************************************************
  * Plane Context Part                                    *
@@ -617,12 +618,14 @@ void handle_rsi_plane_enter(struct rec *rec, struct rsi_result *res)
   /* Check plane index boundary */
   if (plane_index < 1 || plane_index > rd->num_aux_planes) {
     res->smc_res.x[0] = RSI_ERROR_INPUT;
+    buffer_unmap(rd);
     return;
   }
 
   /* Check ipa alignment and boundary */
   if (!GRANULE_ALIGNED(ipa) || !addr_in_rec_par(rec, ipa)) {
     res->smc_res.x[0] = RSI_ERROR_INPUT;
+    buffer_unmap(rd);
     return;
   }
 
@@ -676,11 +679,33 @@ void handle_rsi_plane_sysreg_read(struct rec *rec, struct rsi_result *res)
   unsigned long plane_index = rec->regs[1];
   unsigned long sysreg_addr = rec->regs[2];
 
+  struct rd *rd;
+  rd = buffer_granule_map(rec->realm_info.g_rd, SLOT_RD);
+
+  /* Check plane index boundary */
+  if (plane_index > rd->num_aux_planes) {
+    res->smc_res.x[0] = RSI_ERROR_INPUT;
+    buffer_unmap(rd);
+    return;
+  }
+
+  /* Check rec sysreg encoding validation */
+  if (!rec_sysreg_valid(rec, sysreg_addr, false)) {
+    res->smc_res.x[0] = RSI_ERROR_INPUT;
+    buffer_unmap(rd);
+    return;
+  }
+
+  struct rsi_sysreg_val sysreg_val;
+
   res->action = UPDATE_REC_RETURN_TO_REALM;
 
+  /* Unmap buffers */
+  buffer_unmap(rd);
+
   res->smc_res.x[0] = RSI_SUCCESS;
-  res->smc_res.x[1] = plane_index;
-  res->smc_res.x[2] = sysreg_addr;
+  res->smc_res.x[1] = sysreg_val.value_lower;
+  res->smc_res.x[2] = sysreg_val.value_upper;
 }
 
 void handle_rsi_plane_sysreg_write(struct rec *rec, struct rsi_result *res)
@@ -690,12 +715,31 @@ void handle_rsi_plane_sysreg_write(struct rec *rec, struct rsi_result *res)
   unsigned long value_lower = rec->regs[3];
   unsigned long value_upper = rec->regs[4];
 
-  (void)plane_index;
-  (void)sysreg_addr;
-  (void)value_lower;
-  (void)value_upper;
+  struct rd *rd;
+  rd = buffer_granule_map(rec->realm_info.g_rd, SLOT_RD);
+
+  /* Check plane index boundary */
+  if (plane_index > rd->num_aux_planes) {
+    res->smc_res.x[0] = RSI_ERROR_INPUT;
+    buffer_unmap(rd);
+    return;
+  }
+
+  /* Check rec sysreg encoding validation */
+  if (!rec_sysreg_valid(rec, sysreg_addr, true)) {
+    res->smc_res.x[0] = RSI_ERROR_INPUT;
+    buffer_unmap(rd);
+    return;
+  }
+
+  struct rsi_sysreg_val sysreg_val;
+  sysreg_val.value_lower = value_lower;
+  sysreg_val.value_upper = value_upper;
 
   res->action = UPDATE_REC_RETURN_TO_REALM;
+
+  /* Unmap buffers */
+  buffer_unmap(rd);
 
   res->smc_res.x[0] = RSI_SUCCESS;
 }

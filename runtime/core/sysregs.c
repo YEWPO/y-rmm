@@ -316,3 +316,14 @@ bool handle_sysreg_access_trap(struct rec *rec, struct rmi_rec_exit *rec_exit,
 
 	return true;
 }
+
+bool rec_sysreg_valid(struct rec *rec, unsigned long sysreg_addr, bool is_write) {
+  (void)rec;
+  (void)sysreg_addr;
+  (void)is_write;
+  /*
+   * TODO: Check If sysreg_addr's d128 is enable, the sysreg is 128 bits register
+   */
+
+  return true;
+}

@@ -444,6 +444,11 @@ struct rsi_host_call {
    ((crm) << RSI_SYSREG_CRM_SHIFT) | \
    ((op2) << RSI_SYSREG_OP2_SHIFT))
 
+struct rsi_sysreg_val {
+  SET_MEMBER_RSI(unsigned long value_lower, 0, 0x8);
+  SET_MEMBER_RSI(unsigned long value_upper, 0x8, 0x10);
+};
+
 /*
  * RsiExitReason
  * This enumeration represents the reason for a plane exit.

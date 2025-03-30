@@ -11,5 +11,6 @@ struct rmi_rec_exit;
 
 bool handle_sysreg_access_trap(struct rec *rec, struct rmi_rec_exit *rec_exit,
 			       unsigned long esr);
+bool rec_sysreg_valid(struct rec *rec, unsigned long sysreg_addr, bool is_write);
 
 #endif /* SYSREGS_H */
