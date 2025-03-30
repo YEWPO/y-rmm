@@ -10,6 +10,10 @@
 #include <stdbool.h>
 #include <exit.h>
 
+/*********************************************************
+ * Plane Context Part                                    *
+ *********************************************************/
+
 static struct p0_state p0_states[MAX_RECS];
 static struct pn_state pn_states[MAX_AUX_PLANES][MAX_RECS];
 
@@ -662,6 +666,10 @@ void handle_rsi_plane_enter(struct rec *rec, struct rsi_result *res)
   /* Write result values */
   res->smc_res.x[0] = RSI_SUCCESS;
 }
+
+/*********************************************************
+ * Plane Sysreg Part                                     *
+ *********************************************************/
 
 void handle_rsi_plane_sysreg_read(struct rec *rec, struct rsi_result *res)
 {

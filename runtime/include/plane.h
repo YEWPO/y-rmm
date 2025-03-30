@@ -30,11 +30,14 @@ struct p0_state {
   unsigned long plane_run_pa;
 };
 
+/* Context */
 bool is_aux_plane(struct rec *rec);
 void check_plane_exit(struct rec *rec);
 struct gic_cpu_state *get_gic_owner_gic_state(struct rec *rec);
 void report_plane_timer_state(struct rec *rec, struct timer_state *timer_state);
 bool handle_aux_plane_exit(struct rec *rec, struct rmi_rec_exit *rec_exit, unsigned long exit_reason);
 void init_aux_plane_state(unsigned int num_aux_plane);
+
+/* Sysreg */
 
 #endif
