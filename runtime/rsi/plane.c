@@ -175,11 +175,16 @@ static void load_aux_state(struct rec *rec, struct rsi_plane_enter *enter, struc
   }
 
   /* Load GIC info from plane run enter */
-  if ((enter->flags & PLANE_ENTER_FLAG_GIC_OWNER) != 0) {
+  if ((pn_state->flags & PLANE_ENTER_FLAG_GIC_OWNER) != 0) {
+    /* GIC Pn switcher, use P0's gic state */
+    struct p0_state *p0_state;
+    p0_state = get_current_rec_p0_state(rec);
+    gic_restore_state(&p0_state->sysregs.gicstate);
+  } else {
     pn_state->sysregs.gicstate.ich_hcr_el2 = enter->gicv3_hcr;
     memcpy(pn_state->sysregs.gicstate.ich_lr_el2, enter->gicv3_lrs, sizeof(enter->gicv3_lrs));
+    gic_restore_state(&pn_state->sysregs.gicstate);
   }
-  gic_restore_state(&pn_state->sysregs.gicstate);
 }
 
 static void save_aux_state(struct rec *rec, struct rsi_plane_exit *exit, struct pn_state *pn_state)
@@ -203,12 +208,24 @@ static void save_aux_state(struct rec *rec, struct rsi_plane_exit *exit, struct 
   exit->spsr_el2 = read_spsr_el2();
 
   /* Report Pn's GIC info */
-  gic_save_state(&pn_state->sysregs.gicstate);
-  exit->gicv3_hcr = pn_state->sysregs.gicstate.ich_hcr_el2;
-  memcpy(exit->gicv3_lrs, pn_state->sysregs.gicstate.ich_lr_el2, sizeof(exit->gicv3_lrs));
-  exit->gicv3_misr = pn_state->sysregs.gicstate.ich_misr_el2;
-  exit->gicv3_vmcr = pn_state->sysregs.gicstate.ich_vmcr_el2;
-  write_ich_hcr_el2(pn_state->sysregs.gicstate.ich_hcr_el2 | ICH_HCR_EL2_EN_BIT); /* (Issue: gic_save_state) */
+  if((pn_state->flags & PLANE_ENTER_FLAG_GIC_OWNER) != 0) {
+    /* GIC Pn Switcher, use P0's gic state */
+    struct p0_state *p0_state;
+    p0_state = get_current_rec_p0_state(rec);
+    gic_save_state(&p0_state->sysregs.gicstate);
+    exit->gicv3_hcr = p0_state->sysregs.gicstate.ich_hcr_el2;
+    memcpy(exit->gicv3_lrs, p0_state->sysregs.gicstate.ich_lr_el2, sizeof(exit->gicv3_lrs));
+    exit->gicv3_misr = p0_state->sysregs.gicstate.ich_misr_el2;
+    exit->gicv3_vmcr = p0_state->sysregs.gicstate.ich_vmcr_el2;
+    write_ich_hcr_el2(p0_state->sysregs.gicstate.ich_hcr_el2 | ICH_HCR_EL2_EN_BIT); /* (Issue: gic_save_state) */
+  } else {
+    gic_save_state(&pn_state->sysregs.gicstate);
+    exit->gicv3_hcr = pn_state->sysregs.gicstate.ich_hcr_el2;
+    memcpy(exit->gicv3_lrs, pn_state->sysregs.gicstate.ich_lr_el2, sizeof(exit->gicv3_lrs));
+    exit->gicv3_misr = pn_state->sysregs.gicstate.ich_misr_el2;
+    exit->gicv3_vmcr = pn_state->sysregs.gicstate.ich_vmcr_el2;
+    write_ich_hcr_el2(pn_state->sysregs.gicstate.ich_hcr_el2 | ICH_HCR_EL2_EN_BIT); /* (Issue: gic_save_state) */
+  }
 
   /* Report Pn's timer state */
   exit->cntp_ctl = pn_state->sysregs.cntp_ctl_el0;
