@@ -241,6 +241,7 @@ static void load_p0_state(struct rec *rec)
 
   /* Load P0's sysregs */
   load_sysregs(&p0_state->sysregs);
+  gic_restore_state(&p0_state->sysregs.gicstate);
 }
 
 static void save_p0_state(struct rec *rec, unsigned long plane_index, unsigned long plane_run_pa)
@@ -267,6 +268,7 @@ static void save_p0_state(struct rec *rec, unsigned long plane_index, unsigned l
 
   /* Save P0's sysregs */
   save_sysregs(&p0_state->sysregs);
+  gic_save_state(&p0_state->sysregs.gicstate);
 }
 
 static void exit_aux_plane(struct rec *rec, unsigned long exit_reason)
