@@ -584,17 +584,15 @@ static bool check_aux_plane_sync_exception(struct rec *rec, unsigned long exit_r
 
 bool handle_aux_plane_exit(struct rec *rec, struct rmi_rec_exit *rec_exit, unsigned long exit_reason)
 {
-  INFO("[Plane]\tAn exception:\n"
-      "elr_el2 =\t0x%016lx\t"
-      "esr_el2 =\t0x%016lx\n"
-      "far_el2 =\t0x%016lx\t"
-      "hpfar_el2 =\t0x%016lx\n"
-      "spsr_el2 =\t0x%016lx\n",
-      read_elr_el2(), read_esr_el2(), read_far_el2(), read_hpfar_el2(), read_spsr_el2());
-  INFO("elr_el1 =\t0x%016lx\t"
-      "esr_el1 =\t0x%016lx\n"
-      "far_el1 =\t0x%016lx\t"
+  INFO("[Plane]\tGot an exception %ld from Pn, infos:\n"
+      "elr_el2 =\t0x%016lx\tesr_el2 =\t0x%016lx\n"
+      "far_el2 =\t0x%016lx\thpfar_el2 =\t0x%016lx\n"
+      "spsr_el2 =\t0x%016lx\n"
+      "elr_el1 =\t0x%016lx\tesr_el1 =\t0x%016lx\n"
+      "far_el1 =\t0x%016lx\n"
       "spsr_el1 =\t0x%016lx\n",
+      exit_reason,
+      read_elr_el2(), read_esr_el2(), read_far_el2(), read_hpfar_el2(), read_spsr_el2(),
       read_elr_el12(), read_esr_el12(), read_far_el12(), read_spsr_el12());
 
   if (check_rec_exit(rec, rec_exit, exit_reason)) {

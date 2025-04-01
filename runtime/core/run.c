@@ -293,7 +293,11 @@ void rec_run_loop(struct rec *rec, struct rmi_rec_exit *rec_exit)
 	assert(rec->active_simd_ctx == NULL);
 	rec->active_simd_ctx = &g_ns_simd_ctx[cpuid];
 
+  static bool return_to_realm = false;
+
 	do {
+    return_to_realm = false;
+
 		unsigned long rmm_cptr_el2 = read_cptr_el2();
 
 		/*
@@ -335,7 +339,13 @@ void rec_run_loop(struct rec *rec, struct rmi_rec_exit *rec_exit)
 			write_cptr_el2(rmm_cptr_el2);
 			isb();
 		}
-	} while (handle_realm_exit(rec, rec_exit, realm_exception_code));
+
+    if (is_aux_plane(rec)) {
+      return_to_realm = handle_aux_plane_exit(rec, rec_exit, realm_exception_code);
+    } else {
+      return_to_realm = handle_realm_exit(rec, rec_exit, realm_exception_code);
+    }
+	} while (return_to_realm);
 
 	/*
 	 * Check if FPU/SIMD was used, and if it was, save the realm state,
